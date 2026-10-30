@@ -1,0 +1,95 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}ผู้ใช้งาน{% endblock %}
+{% block page_title %}จัดการผู้ใช้งาน{% endblock %}
+{% block page_subtitle %}ตาราง users — ทั้งหมด {{ users|length }} บัญชี{% endblock %}
+
+{% block content %}
+
+<div class="bg-[#1A1816] rounded-2xl border border-white/5 overflow-hidden">
+  <div class="px-6 py-4 border-b border-white/5 flex items-center justify-between">
+    <h2 class="text-sm font-semibold text-white">Users Table</h2>
+    <span class="text-[11px] text-white/30">{{ users|length }} รายการ</span>
+  </div>
+
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="border-b border-white/5">
+          <th class="text-left px-5 py-3 text-[11px] uppercase tracking-wider text-white/30 font-medium">ID</th>
+          <th class="text-left px-5 py-3 text-[11px] uppercase tracking-wider text-white/30 font-medium">ชื่อผู้ใช้</th>
+          <th class="text-left px-5 py-3 text-[11px] uppercase tracking-wider text-white/30 font-medium">อีเมล</th>
+          <th class="text-left px-5 py-3 text-[11px] uppercase tracking-wider text-white/30 font-medium">เบอร์โทร</th>
+          <th class="text-left px-5 py-3 text-[11px] uppercase tracking-wider text-white/30 font-medium">Badge</th>
+          <th class="text-left px-5 py-3 text-[11px] uppercase tracking-wider text-white/30 font-medium">ยอดเงิน</th>
+          <th class="text-left px-5 py-3 text-[11px] uppercase tracking-wider text-white/30 font-medium">สิทธิ์</th>
+          <th class="text-left px-5 py-3 text-[11px] uppercase tracking-wider text-white/30 font-medium">สมัครเมื่อ</th>
+          <th class="text-left px-5 py-3 text-[11px] uppercase tracking-wider text-white/30 font-medium">จัดการ</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-white/5">
+        {% for user in users %}
+        <tr class="hover:bg-white/3 transition {% if user.is_admin %}bg-[#FF6B4A]/3{% endif %}">
+          <td class="px-5 py-3 text-white/30 text-xs">{{ user.id }}</td>
+          <td class="px-5 py-3">
+            <div class="flex items-center gap-2.5">
+              <div class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold
+                          {% if user.is_admin %}bg-[#FF6B4A] text-white{% else %}bg-white/10 text-white/60{% endif %}">
+                {{ user.username[0]|upper }}
+              </div>
+              <span class="text-white text-xs font-medium">{{ user.username }}</span>
+            </div>
+          </td>
+          <td class="px-5 py-3 text-white/60 text-xs">{{ user.email }}</td>
+          <td class="px-5 py-3 text-white/50 text-xs">{{ user.phone_number or '—' }}</td>
+          <td class="px-5 py-3">
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-white/5 text-white/50">{{ user.maker_badge }}</span>
+          </td>
+          <td class="px-5 py-3 text-[#FF6B4A] text-xs font-semibold">฿{{ "%.2f"|format(user.wallet_balance) }}</td>
+          <td class="px-5 py-3">
+            {% if user.is_admin %}
+              <span class="flex items-center gap-1 text-[10px] font-semibold text-[#FF6B4A]">
+                <i class="fa-solid fa-shield-halved"></i> Admin
+              </span>
+            {% else %}
+              <span class="text-[10px] text-white/30">Member</span>
+            {% endif %}
+          </td>
+          <td class="px-5 py-3 text-white/30 text-xs">{{ user.created_at.strftime('%d/%m/%Y') }}</td>
+          <td class="px-5 py-3">
+            <div class="flex items-center gap-2">
+              <!-- Toggle Admin -->
+              {% if user.id != current_user.id %}
+              <form action="{{ url_for('admin_toggle_admin', user_id=user.id) }}" method="POST">
+                <button type="submit" title="{% if user.is_admin %}ถอดสิทธิ์ Admin{% else %}เพิ่มสิทธิ์ Admin{% endif %}"
+                        class="px-2 py-1 rounded-lg text-[10px] font-medium transition
+                               {% if user.is_admin %}text-yellow-400 hover:bg-yellow-500/10{% else %}text-white/30 hover:text-yellow-400 hover:bg-yellow-500/10{% endif %}">
+                  <i class="fa-solid fa-shield-halved"></i>
+                </button>
+              </form>
+              {% endif %}
+
+              <!-- Delete -->
+              {% if not user.is_admin %}
+              <form action="{{ url_for('admin_delete_user', user_id=user.id) }}" method="POST"
+                    onsubmit="return confirm('ลบผู้ใช้ {{ user.username }} ออกจากระบบ?')">
+                <button type="submit" class="px-2 py-1 rounded-lg text-[10px] font-medium text-white/30 hover:text-red-400 hover:bg-red-500/10 transition">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              </form>
+              {% else %}
+              <span class="text-[10px] text-white/20 px-2 py-1">—</span>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="9" class="px-6 py-10 text-center text-white/20 text-sm">ไม่มีข้อมูลผู้ใช้</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}

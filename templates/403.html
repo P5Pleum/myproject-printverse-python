@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}403 Forbidden | PrintVerse 3D{% endblock %}
+
+{% block content %}
+<div class="w-full flex-1 flex items-center justify-center px-6 py-20 text-center">
+  <div class="max-w-md bg-white border border-[#E7E2D9] rounded-3xl p-8 sm:p-12 shadow-sm space-y-5">
+    <div class="w-16 h-16 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-500 flex items-center justify-center mx-auto text-2xl">
+      <i class="fa-solid fa-lock"></i>
+    </div>
+    <h2 class="text-2xl font-extrabold text-[#1C1917]">403 — สิทธิ์การเข้าถึงถูกปฏิเสธ</h2>
+    <p class="text-xs text-stone-500 leading-relaxed">
+      หน้านี้สงวนสิทธิ์เฉพาะผู้ดูแลระบบ (Admin) บัญชี <strong>official@printverse.com</strong> เท่านั้น
+    </p>
+    <div class="pt-2">
+      <a href="{{ url_for('index') }}" class="inline-flex items-center px-5 py-2.5 rounded-xl bg-[#FF6B4A] hover:bg-[#E85938] text-white text-xs font-bold shadow-sm transition">
+        กลับหน้าหลักตลาดโมเดล
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

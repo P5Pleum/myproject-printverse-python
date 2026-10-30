@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+{% block title %}สมัครสมาชิก | PrintVerse 3D{% endblock %}
+
+{% block content %}
+<div class="w-full flex-1 flex items-center justify-center px-6 sm:px-10 lg:px-16 py-10 lg:py-16">
+  <div class="w-full max-w-5xl bg-white border border-[#E7E2D9] rounded-3xl overflow-hidden shadow-sm grid grid-cols-1 lg:grid-cols-12 min-h-[580px]">
+    
+    <!-- Left Showcase Side (Editorial Gallery & 3D Artwork Aesthetic) -->
+    <div class="lg:col-span-6 bg-[#F5F2EB]/70 border-b lg:border-b-0 lg:border-r border-[#E7E2D9] p-8 sm:p-12 flex flex-col justify-between relative overflow-hidden">
+      
+      <!-- Top Label -->
+      <div class="relative z-10 space-y-4">
+        <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-white border border-[#E7E2D9] text-[11px] font-semibold tracking-wider text-stone-600 uppercase">
+          <span class="w-1.5 h-1.5 rounded-full bg-[#FF6B4A]"></span>
+          <span>New Member Privilege</span>
+        </div>
+
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-[#1C1917] tracking-tight leading-snug">
+          สมัครสมาชิกใหม่ <br>
+          <span class="text-[#FF6B4A]">PrintVerse 3D</span>
+        </h2>
+        <p class="text-xs sm:text-sm text-stone-600 leading-relaxed max-w-sm">
+          เปิดประตูสู่คลังโมเดล 3D คุณภาพสูง สามารถเลือกซื้อและดาวน์โหลดไฟล์งานพิมพ์ที่ต้องการได้ทันที
+        </p>
+      </div>
+
+      <!-- Center Official Logo Showcase -->
+      <div class="my-8 relative z-10 flex items-center justify-center">
+        <div class="relative w-full max-w-[380px] p-6 sm:p-8 rounded-3xl bg-white border border-[#E7E2D9] shadow-md flex items-center justify-center group hover:shadow-lg hover:border-[#FF6B4A]/40 transition duration-300">
+          <img src="{{ url_for('serve_photo', filename='LOGO.png') }}" 
+               alt="PrintVerse.3D Logo" 
+               class="w-full h-auto max-h-48 object-contain group-hover:scale-105 transition duration-300">
+        </div>
+      </div>
+
+      <!-- Bottom Highlights Bar -->
+      <div class="relative z-10 pt-4 border-t border-[#E7E2D9]/80 flex items-center justify-between text-[11px] text-stone-500">
+        <div class="flex items-center space-x-1.5">
+          <i class="fa-solid fa-lock text-[#FF6B4A]"></i>
+          <span>ระบบความปลอดภัยมาตรฐาน</span>
+        </div>
+        <div class="flex items-center space-x-1.5">
+          <i class="fa-solid fa-cloud-arrow-down text-emerald-600"></i>
+          <span>ดาวน์โหลดไม่จำกัด</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Right Form Side (Warm Minimal Interactive Portal) -->
+    <div class="lg:col-span-6 p-8 sm:p-12 flex flex-col justify-center bg-white">
+      
+      <div class="w-full max-w-md mx-auto space-y-6">
+        
+        <!-- Welcome Title -->
+        <div>
+          <h3 class="text-2xl font-extrabold text-[#1C1917] tracking-tight">สร้างบัญชีสมาชิก</h3>
+          <p class="text-xs text-stone-500 mt-1">กรอกข้อมูลเบื้องต้นเพื่อเริ่มต้นใช้งานและเลือกซื้อโมเดล 3D</p>
+        </div>
+
+        <!-- Clean Segmented Tabs -->
+        <div class="grid grid-cols-2 gap-1 p-1 bg-[#FAF8F5] border border-[#E7E2D9] rounded-2xl text-xs font-bold">
+          <a href="{{ url_for('login') }}" class="py-2.5 text-center rounded-xl text-stone-500 hover:text-[#1C1917] transition">
+            เข้าสู่ระบบ
+          </a>
+          <a href="{{ url_for('register') }}" class="py-2.5 text-center rounded-xl bg-white text-[#1C1917] shadow-xs transition">
+            สมัครสมาชิก
+          </a>
+        </div>
+
+        <!-- Form -->
+        <form method="POST" action="{{ url_for('register') }}" class="space-y-3.5">
+          <div>
+            <label for="username" class="block text-[11px] font-semibold text-stone-600 mb-1 uppercase tracking-wider">ชื่อผู้ใช้</label>
+            <input type="text" id="username" name="username" required placeholder="username"
+              class="w-full px-4 py-2.5 rounded-xl bg-[#FAF8F5] border border-[#E7E2D9] text-[#1C1917] placeholder-stone-400 focus:outline-none focus:bg-white focus:border-[#FF6B4A] focus:ring-2 focus:ring-[#FF6B4A]/10 transition text-sm">
+          </div>
+
+          <div>
+            <label for="email" class="block text-[11px] font-semibold text-stone-600 mb-1 uppercase tracking-wider">อีเมล</label>
+            <input type="email" id="email" name="email" required placeholder="name@example.com"
+              class="w-full px-4 py-2.5 rounded-xl bg-[#FAF8F5] border border-[#E7E2D9] text-[#1C1917] placeholder-stone-400 focus:outline-none focus:bg-white focus:border-[#FF6B4A] focus:ring-2 focus:ring-[#FF6B4A]/10 transition text-sm">
+          </div>
+
+          <div>
+            <label for="phone" class="block text-[11px] font-semibold text-stone-600 mb-1 uppercase tracking-wider">เบอร์โทรศัพท์</label>
+            <input type="tel" id="phone" name="phone" placeholder="08xxxxxxxx"
+              class="w-full px-4 py-2.5 rounded-xl bg-[#FAF8F5] border border-[#E7E2D9] text-[#1C1917] placeholder-stone-400 focus:outline-none focus:bg-white focus:border-[#FF6B4A] focus:ring-2 focus:ring-[#FF6B4A]/10 transition text-sm">
+          </div>
+
+          <!-- Dedicated Address Fields Group -->
+          <div class="p-4 bg-[#FAF8F5] border border-[#E7E2D9] rounded-2xl space-y-3">
+            <div class="flex items-center justify-between border-b border-[#E7E2D9] pb-2">
+              <span class="text-[11px] font-bold text-stone-700 uppercase tracking-wider flex items-center gap-1.5">
+                <i class="fa-solid fa-location-dot text-[#FF6B4A]"></i>
+                <span>ข้อมูลที่อยู่สำหรับจัดส่ง</span>
+              </span>
+              <span class="text-[10px] text-stone-400">สำหรับส่งชิ้นงานพิมพ์ 3D</span>
+            </div>
+
+            <!-- ที่อยู่ (บ้านเลขที่ / หมู่ / ซอย / ถนน) -->
+            <div>
+              <label for="address_detail" class="block text-[11px] font-semibold text-stone-600 mb-1">
+                ที่อยู่ <span class="text-stone-400 font-normal">(บ้านเลขที่ / หมู่ / ซอย / ถนน)</span>
+              </label>
+              <input type="text" id="address_detail" name="address_detail" placeholder="เช่น 123/45 หมู่ 6 ซอยสุขุมวิท 21 ถนนสุขุมวิท"
+                class="w-full px-3.5 py-2.5 rounded-xl bg-white border border-[#E7E2D9] text-[#1C1917] placeholder-stone-400 focus:outline-none focus:border-[#FF6B4A] focus:ring-2 focus:ring-[#FF6B4A]/10 transition text-xs">
+            </div>
+
+            <!-- ตำบล / แขวง และ อำเภอ / เขต -->
+            <div class="grid grid-cols-2 gap-2.5">
+              <div>
+                <label for="subdistrict" class="block text-[11px] font-semibold text-stone-600 mb-1">
+                  ตำบล / แขวง
+                </label>
+                <input type="text" id="subdistrict" name="subdistrict" placeholder="ตำบล หรือ แขวง"
+                  class="w-full px-3.5 py-2.5 rounded-xl bg-white border border-[#E7E2D9] text-[#1C1917] placeholder-stone-400 focus:outline-none focus:border-[#FF6B4A] focus:ring-2 focus:ring-[#FF6B4A]/10 transition text-xs">
+              </div>
+              <div>
+                <label for="district" class="block text-[11px] font-semibold text-stone-600 mb-1">
+                  อำเภอ / เขต
+                </label>
+                <input type="text" id="district" name="district" placeholder="อำเภอ หรือ เขต"
+                  class="w-full px-3.5 py-2.5 rounded-xl bg-white border border-[#E7E2D9] text-[#1C1917] placeholder-stone-400 focus:outline-none focus:border-[#FF6B4A] focus:ring-2 focus:ring-[#FF6B4A]/10 transition text-xs">
+              </div>
+            </div>
+
+            <!-- จังหวัด และ รหัสไปรษณีย์ -->
+            <div class="grid grid-cols-2 gap-2.5">
+              <div>
+                <label for="province" class="block text-[11px] font-semibold text-stone-600 mb-1">
+                  จังหวัด
+                </label>
+                <input type="text" id="province" name="province" placeholder="จังหวัด เช่น กรุงเทพฯ"
+                  class="w-full px-3.5 py-2.5 rounded-xl bg-white border border-[#E7E2D9] text-[#1C1917] placeholder-stone-400 focus:outline-none focus:border-[#FF6B4A] focus:ring-2 focus:ring-[#FF6B4A]/10 transition text-xs">
+              </div>
+              <div>
+                <label for="postal_code" class="block text-[11px] font-semibold text-stone-600 mb-1">
+                  รหัสไปรษณีย์
+                </label>
+                <input type="text" id="postal_code" name="postal_code" maxlength="5" pattern="[0-9]{5}" inputmode="numeric" placeholder="เช่น 10110"
+                  class="w-full px-3.5 py-2.5 rounded-xl bg-white border border-[#E7E2D9] text-[#1C1917] placeholder-stone-400 focus:outline-none focus:border-[#FF6B4A] focus:ring-2 focus:ring-[#FF6B4A]/10 transition text-xs">
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label for="password" class="block text-[11px] font-semibold text-stone-600 mb-1 uppercase tracking-wider">รหัสผ่าน</label>
+            <div class="relative">
+              <input type="password" id="password" name="password" required minlength="6" placeholder="••••••••"
+                class="w-full pl-4 pr-11 py-2.5 rounded-xl bg-[#FAF8F5] border border-[#E7E2D9] text-[#1C1917] placeholder-stone-400 focus:outline-none focus:bg-white focus:border-[#FF6B4A] focus:ring-2 focus:ring-[#FF6B4A]/10 transition text-sm">
+              <button type="button" onclick="togglePasswordVisibility('password', this)" 
+                class="absolute right-3.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700 transition p-1 text-sm focus:outline-none"
+                title="คลิกเพื่อดูหรือซ่อนรหัสผ่าน">
+                <i class="fa-solid fa-eye"></i>
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label for="confirm_password" class="block text-[11px] font-semibold text-stone-600 mb-1 uppercase tracking-wider">ยืนยันรหัสผ่าน</label>
+            <div class="relative">
+              <input type="password" id="confirm_password" name="confirm_password" required minlength="6" placeholder="••••••••"
+                class="w-full pl-4 pr-11 py-2.5 rounded-xl bg-[#FAF8F5] border border-[#E7E2D9] text-[#1C1917] placeholder-stone-400 focus:outline-none focus:bg-white focus:border-[#FF6B4A] focus:ring-2 focus:ring-[#FF6B4A]/10 transition text-sm">
+              <button type="button" onclick="togglePasswordVisibility('confirm_password', this)" 
+                class="absolute right-3.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700 transition p-1 text-sm focus:outline-none"
+                title="คลิกเพื่อดูหรือซ่อนรหัสผ่าน">
+                <i class="fa-solid fa-eye"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="pt-2">
+            <button type="submit" class="w-full py-3.5 px-4 rounded-xl font-bold text-sm text-white bg-[#FF6B4A] hover:bg-[#E85938] shadow-md shadow-[#FF6B4A]/25 transition flex items-center justify-center space-x-2">
+              <span>สมัครสมาชิกและรับรหัส OTP</span>
+              <i class="fa-solid fa-arrow-right text-xs"></i>
+            </button>
+          </div>
+        </form>
+
+      </div>
+
+    </div>
+
+  </div>
+</div>
+{% endblock %}

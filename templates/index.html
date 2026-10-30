@@ -1,0 +1,483 @@
+{% extends "base.html" %}
+{% block title %}ตลาดโมเดล 3D | PrintVerse 3D{% endblock %}
+
+{% block content %}
+<div class="w-full flex-1 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 py-12 sm:py-20 space-y-16">
+
+  <!-- Editorial Hero & Search Section (Spacious & Clean) -->
+  <div class="space-y-8 max-w-3xl">
+    
+    <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-white border border-[#E7E2D9] text-xs font-medium text-stone-600 shadow-sm">
+      <span class="w-1.5 h-1.5 rounded-full bg-[#FF6B4A]"></span>
+      <span>3D Print Models Marketplace</span>
+    </div>
+
+    <div class="space-y-4">
+      <h1 class="text-3xl sm:text-5xl lg:text-6xl font-extrabold text-[#1C1917] tracking-tight leading-[1.15]">
+        คอลเลกชันไฟล์โมเดล <br>
+        <span class="text-[#FF6B4A]">สำหรับเครื่องพิมพ์ 3 มิติ</span>
+      </h1>
+      <p class="text-base sm:text-lg text-stone-600 leading-relaxed max-w-2xl">
+        ค้นหาและเลือกซื้อไฟล์งานพิมพ์คุณภาพสูง รองรับมาตรฐานสากล ทั้ง .STL, .3MF, .STEP พร้อมพารามิเตอร์การพิมพ์ที่ผ่านการทดสอบจริง
+      </p>
+    </div>
+
+    <!-- Search Bar with Thin Border & Coral CTA -->
+    <form method="GET" action="{{ url_for('index') }}" class="pt-2">
+      <div class="relative flex items-center bg-white border border-[#E7E2D9] rounded-2xl p-1.5 shadow-sm focus-within:border-[#FF6B4A] focus-within:ring-2 focus-within:ring-[#FF6B4A]/10 transition">
+        <div class="pl-4 text-stone-400">
+          <i class="fa-solid fa-magnifying-glass text-sm"></i>
+        </div>
+        <input type="text" name="q" value="{{ search_query }}" placeholder="ค้นหาชื่อโมเดล เช่น มังกร, โคมไฟ, ชั้นวาง, แคปซูล, .stl..."
+          class="w-full px-4 py-3 bg-transparent text-sm text-[#1C1917] placeholder-stone-400 focus:outline-none">
+        
+        <div class="flex items-center space-x-2 pr-1">
+          {% if search_query or selected_format or selected_category %}
+            <a href="{{ url_for('index') }}" class="text-xs text-stone-400 hover:text-stone-700 px-2.5 py-1.5 transition">ล้าง</a>
+          {% endif %}
+          <button type="submit" class="px-5 py-2.5 rounded-xl text-xs font-semibold text-white bg-[#FF6B4A] hover:bg-[#E85938] transition shadow-sm shadow-[#FF6B4A]/25">
+            ค้นหา
+          </button>
+        </div>
+      </div>
+    </form>
+
+    <!-- Thin Grid Divider & Filters -->
+    <div class="pt-2 flex flex-wrap items-center gap-2 text-xs border-t border-[#E7E2D9]">
+      <span class="text-stone-400 mr-2 py-1">ประเภทไฟล์:</span>
+      <a href="{{ url_for('index', q=search_query) }}" 
+        class="px-3.5 py-1.5 rounded-lg border transition font-medium {% if not selected_format %}bg-[#1C1917] text-white border-[#1C1917]{% else %}bg-white text-stone-600 border-[#E7E2D9] hover:border-stone-400{% endif %}">
+        ทั้งหมด ({{ models|length }})
+      </a>
+      <a href="{{ url_for('index', q=search_query, format='STL') }}" 
+        class="px-3.5 py-1.5 rounded-lg border transition font-medium {% if selected_format == 'STL' %}bg-[#1C1917] text-white border-[#1C1917]{% else %}bg-white text-stone-600 border-[#E7E2D9] hover:border-stone-400{% endif %}">
+        .STL
+      </a>
+      <a href="{{ url_for('index', q=search_query, format='3MF') }}" 
+        class="px-3.5 py-1.5 rounded-lg border transition font-medium {% if selected_format == '3MF' %}bg-[#1C1917] text-white border-[#1C1917]{% else %}bg-white text-stone-600 border-[#E7E2D9] hover:border-stone-400{% endif %}">
+        .3MF
+      </a>
+      <a href="{{ url_for('index', q=search_query, format='STEP') }}" 
+        class="px-3.5 py-1.5 rounded-lg border transition font-medium {% if selected_format == 'STEP' %}bg-[#1C1917] text-white border-[#1C1917]{% else %}bg-white text-stone-600 border-[#E7E2D9] hover:border-stone-400{% endif %}">
+        .STEP
+      </a>
+    </div>
+
+  </div>
+
+  <!-- Gallery Catalog Grid with Thin Architectural Lines -->
+  {% if models %}
+    <div class="space-y-6">
+      
+      <div class="flex items-center justify-between border-b border-[#E7E2D9] pb-4">
+        <h2 class="text-lg font-bold text-[#1C1917] tracking-tight">
+          โมเดลทั้งหมด <span class="text-stone-400 font-normal text-sm">({{ models|length }} รายการ)</span>
+        </h2>
+        <span class="text-xs text-stone-500">เรียงตามรายการล่าสุด</span>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 sm:gap-8">
+        {% for model in models %}
+          <div class="bg-white border border-[#E7E2D9] rounded-2xl overflow-hidden hover:border-[#FF6B4A]/60 hover:shadow-lg hover:shadow-stone-200/50 transition-all duration-300 flex flex-col group">
+            
+            <!-- Card Thumbnail with Full Image Preview (Clickable) -->
+            <a href="{{ url_for('model_detail', model_id=model.id) }}" class="h-60 bg-[#FAF8F5] border-b border-[#E7E2D9] flex items-center justify-center relative overflow-hidden p-3 block group/img">
+              {% if model.thumbnail_url %}
+                <img src="{{ model.thumbnail_url }}" alt="{{ model.title }}" class="w-full h-full object-contain group-hover/img:scale-105 transition duration-300">
+              {% else %}
+                <div class="w-16 h-16 rounded-2xl bg-white border border-[#E7E2D9] flex items-center justify-center text-stone-400 group-hover:text-[#FF6B4A] group-hover:scale-105 transition shadow-sm">
+                  <i class="fa-solid fa-cube text-2xl"></i>
+                </div>
+              {% endif %}
+              
+              <!-- Format Badge -->
+              <div class="absolute top-3 left-3 z-10">
+                <span class="px-2.5 py-1 rounded-lg text-[11px] font-mono font-bold bg-white/95 text-stone-800 border border-[#E7E2D9] shadow-xs">
+                  .{{ model.primary_format }}
+                </span>
+              </div>
+
+              <!-- Like Button (Top Right) -->
+              <div class="absolute top-3 right-3 z-20">
+                {% if current_user.is_authenticated %}
+                  <button type="button" onclick="toggleLike(event, {{ model.id }})" id="like-btn-{{ model.id }}"
+                          class="like-btn-{{ model.id }} px-2.5 py-1 rounded-full text-xs font-semibold backdrop-blur-md transition flex items-center gap-1.5 shadow-sm {% if model.id in liked_model_ids %}bg-rose-50 text-rose-600 border border-rose-200 hover:bg-rose-100{% else %}bg-white/90 text-stone-600 border border-[#E7E2D9] hover:text-rose-500 hover:border-rose-200{% endif %}"
+                          title="{% if model.id in liked_model_ids %}ยกเลิกถูกใจ{% else %}ถูกใจโมเดลนี้{% endif %}">
+                    <i class="{% if model.id in liked_model_ids %}fa-solid fa-heart text-rose-500{% else %}fa-regular fa-heart{% endif %}"></i>
+                    <span class="like-count-{{ model.id }} text-[11px] font-bold">{{ model.likes_count or 0 }}</span>
+                  </button>
+                {% else %}
+                  <a href="{{ url_for('login') }}" class="px-2.5 py-1 rounded-full text-xs font-semibold backdrop-blur-md transition flex items-center gap-1.5 shadow-sm bg-white/90 text-stone-600 border border-[#E7E2D9] hover:text-rose-500" title="เข้าสู่ระบบเพื่อกดถูกใจ">
+                    <i class="fa-regular fa-heart"></i>
+                    <span class="text-[11px] font-bold">{{ model.likes_count or 0 }}</span>
+                  </a>
+                {% endif %}
+              </div>
+
+              <!-- Category (Bottom Left) -->
+              <div class="absolute bottom-3 left-3 z-10">
+                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-white/95 text-stone-700 border border-[#E7E2D9] shadow-xs">
+                  {{ model.category }}
+                </span>
+              </div>
+
+              <!-- File Size (Bottom Right) -->
+              <div class="absolute bottom-3 right-3 z-10">
+                <span class="px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-stone-900/70 text-white backdrop-blur-xs">
+                  {{ model.file_size_mb }} MB
+                </span>
+              </div>
+
+              <!-- View Details Hint on Hover -->
+              <div class="absolute inset-0 bg-black/25 opacity-0 group-hover/img:opacity-100 transition flex items-center justify-center pointer-events-none">
+                <span class="px-3.5 py-1.5 rounded-xl bg-white/95 text-stone-900 font-bold text-xs shadow-lg flex items-center gap-1.5 backdrop-blur-xs">
+                  <i class="fa-solid fa-magnifying-glass text-[#FF6B4A]"></i> ดูรายละเอียด
+                </span>
+              </div>
+            </a>
+
+            <!-- Card Body -->
+            <div class="p-5 flex-1 flex flex-col justify-between space-y-4">
+              <div>
+                <!-- Creator Profile & Name Row -->
+                <div class="flex items-center gap-2 mb-2 pb-2 border-b border-[#E7E2D9]/60">
+                  {% if model.author and model.author.avatar_url %}
+                    <img src="{{ model.author.avatar_url }}" alt="{{ model.author.username }}" class="w-6 h-6 rounded-full object-cover border border-[#E7E2D9]">
+                  {% else %}
+                    <div class="w-6 h-6 rounded-full bg-stone-100 text-[#FF6B4A] font-bold text-[10px] flex items-center justify-center border border-[#E7E2D9]">
+                      {{ (model.author.username if model.author else 'P')[:1]|upper }}
+                    </div>
+                  {% endif %}
+                  <span class="text-xs text-stone-700 font-semibold truncate">{{ model.author.username if model.author else 'PrintVerse' }}</span>
+                  <span class="text-[9px] px-1.5 py-0.2 rounded-full bg-[#FAF8F5] text-stone-500 font-medium ml-auto border border-[#E7E2D9]">
+                    {{ model.author.maker_badge or 'Maker' if model.author else 'Official' }}
+                  </span>
+                </div>
+
+                <h3 class="text-base font-bold text-[#1C1917] tracking-tight group-hover:text-[#FF6B4A] transition line-clamp-1">
+                  <a href="{{ url_for('model_detail', model_id=model.id) }}" title="{{ model.title }}">
+                    {{ model.title }}
+                  </a>
+                </h3>
+                <p class="text-xs text-stone-500 mt-1.5 line-clamp-2 leading-relaxed">
+                  {{ model.description }}
+                </p>
+
+                <!-- Thin Specs Pills -->
+                {% if model.print_setting or model.filament_info %}
+                  <div class="mt-4 flex flex-wrap gap-1.5 text-[10px] text-stone-500">
+                    {% if model.print_setting %}
+                      <span class="px-2 py-0.5 rounded bg-[#FAF8F5] border border-[#E7E2D9]">
+                        Layer {{ model.print_setting.layer_height }}
+                      </span>
+                    {% endif %}
+                    {% if model.filament_info %}
+                      <span class="px-2 py-0.5 rounded bg-[#FAF8F5] border border-[#E7E2D9]">
+                        {{ model.filament_info.filament_weight_grams }}g
+                      </span>
+                    {% endif %}
+                  </div>
+                {% endif %}
+              </div>
+
+              <!-- Card Footer: Price & Action with Thin Divider -->
+              <div class="pt-4 border-t border-[#E7E2D9] flex items-center justify-between">
+                <div>
+                  <span class="text-[10px] uppercase tracking-wider text-stone-400 block font-semibold">ราคา</span>
+                  <div class="flex flex-col">
+                    <span class="text-base font-extrabold text-[#1C1917]">
+                      {% if model.is_free or model.price == 0 %}
+                        <span class="text-emerald-600">{{ t('free') }}</span>
+                      {% else %}
+                        ฿{{ "%.2f"|format(model.price) }}
+                      {% endif %}
+                    </span>
+                    {% if not model.is_free and model.price > 0 %}
+                      <span class="text-[9px] font-medium text-purple-700">{{ t('vat_included') }}</span>
+                    {% endif %}
+                  </div>
+                </div>
+
+                <div class="flex items-center space-x-2">
+                  {% if model.id in purchased_ids %}
+                    <a href="{{ url_for('dashboard') }}" class="inline-flex items-center space-x-1 px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition">
+                      <i class="fa-solid fa-check text-[10px]"></i>
+                      <span>{{ t('nav_library') }}</span>
+                    </a>
+                  {% else %}
+                    <!-- Add to Cart Button -->
+                    {% if model.id in cart_ids %}
+                      <a href="{{ url_for('cart') }}" title="อยู่ในตะกร้าแล้ว คลิกเพื่อเปิดตะกร้า" class="p-2 rounded-xl text-xs font-semibold bg-[#FAF8F5] text-[#FF6B4A] border border-[#FF6B4A]/30 hover:bg-[#FF6B4A]/10 transition flex items-center justify-center">
+                        <i class="fa-solid fa-check text-xs"></i>
+                      </a>
+                    {% else %}
+                      <form method="POST" action="{{ url_for('cart_add', model_id=model.id) }}" class="inline">
+                        <button type="submit" title="{{ t('add_cart') }}" class="p-2 rounded-xl text-xs font-semibold bg-[#FAF8F5] text-stone-600 border border-[#E7E2D9] hover:text-[#FF6B4A] hover:border-[#FF6B4A]/40 transition flex items-center justify-center">
+                          <i class="fa-solid fa-cart-plus text-xs"></i>
+                        </button>
+                      </form>
+                    {% endif %}
+
+                    <!-- Instant Buy / Download Button -->
+                    {% if model.is_free or model.price == 0 %}
+                      <form method="POST" action="{{ url_for('buy_model', model_id=model.id) }}" class="inline">
+                        <button type="submit" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold transition bg-[#1C1917] text-white hover:bg-stone-800">
+                          {{ t('download') }}
+                        </button>
+                      </form>
+                    {% else %}
+                      <button type="button" 
+                              onclick="openIndexBuyModal({{ model.id }}, '{{ model.title|replace('\'', '\\\'') }}', {{ model.price }}, '{{ model.thumbnail_url or '' }}', '{{ model.category }}', '{{ model.primary_format }}', '{{ model.author.username if model.author else 'PrintVerse' }}')"
+                              class="px-3.5 py-1.5 rounded-xl text-xs font-semibold transition bg-[#FF6B4A] text-white hover:bg-[#E85938] shadow-sm shadow-[#FF6B4A]/25">
+                        {{ t('buy_now') }}
+                      </button>
+                    {% endif %}
+                  {% endif %}
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+        {% endfor %}
+      </div>
+
+    </div>
+  {% else %}
+    <!-- Empty State with Clean Lines -->
+    <div class="text-center py-28 bg-white border border-[#E7E2D9] rounded-3xl p-8 space-y-4 shadow-sm">
+      <div class="w-14 h-14 mx-auto rounded-2xl bg-[#F5F2EB] border border-[#E7E2D9] flex items-center justify-center text-stone-400">
+        <i class="fa-solid fa-magnifying-glass text-lg"></i>
+      </div>
+      <h3 class="text-lg font-bold text-[#1C1917]">ไม่พบโมเดลที่ค้นหา</h3>
+      {% if search_query %}
+        <p class="text-xs text-stone-500 max-w-sm mx-auto">
+          ไม่มีโมเดลที่ตรงกับคำค้นหา "{{ search_query }}" โปรดลองค้นหาด้วยคำอื่น
+        </p>
+      {% endif %}
+      <div class="pt-2">
+        <a href="{{ url_for('index') }}" class="inline-flex items-center px-4 py-2 rounded-xl bg-[#1C1917] text-white hover:bg-stone-800 text-xs font-semibold transition">
+          ดูโมเดลทั้งหมด
+        </a>
+      </div>
+    </div>
+  {% endif %}
+
+</div>
+
+<!-- JavaScript for Interactive Like Toggle -->
+<script>
+  function toggleLike(event, modelId) {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+
+    fetch(`/model/${modelId}/like`, {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.status === 'ok') {
+        const btn = document.getElementById(`like-btn-${modelId}`);
+        const countElements = document.querySelectorAll(`.like-count-${modelId}`);
+        
+        countElements.forEach(el => {
+          el.innerText = data.likes_count;
+        });
+
+        if (btn) {
+          if (data.liked) {
+            btn.className = `like-btn-${modelId} px-2.5 py-1 rounded-full text-xs font-semibold backdrop-blur-md transition flex items-center gap-1.5 shadow-sm bg-rose-50 text-rose-600 border border-rose-200 hover:bg-rose-100`;
+            btn.innerHTML = `<i class="fa-solid fa-heart text-rose-500"></i><span class="like-count-${modelId} text-[11px] font-bold">${data.likes_count}</span>`;
+            btn.title = "ยกเลิกถูกใจ";
+          } else {
+            btn.className = `like-btn-${modelId} px-2.5 py-1 rounded-full text-xs font-semibold backdrop-blur-md transition flex items-center gap-1.5 shadow-sm bg-white/90 text-stone-600 border border-[#E7E2D9] hover:text-rose-500 hover:border-rose-200`;
+            btn.innerHTML = `<i class="fa-regular fa-heart"></i><span class="like-count-${modelId} text-[11px] font-bold">${data.likes_count}</span>`;
+            btn.title = "ถูกใจโมเดลนี้";
+          }
+        }
+      }
+    })
+    .catch(err => {
+      console.error('Error toggling like:', err);
+    });
+  }
+
+  const currentUserBalance = {{ current_user.wallet_balance if current_user.is_authenticated else 0 }};
+
+  function openIndexBuyModal(modelId, title, price, imageUrl, category, format, author) {
+    document.getElementById('modal-title').innerText = title;
+    document.getElementById('modal-category-format').innerText = `หมวดหมู่: ${category} • ฟอร์แมต: .${format}`;
+    document.getElementById('modal-author').innerText = `ผู้สร้าง: ${author}`;
+    
+    const totalVal = parseFloat(price);
+    const basePrice = Math.round((totalVal / 1.07) * 100) / 100;
+    const vatVal = Math.round((totalVal - basePrice) * 100) / 100;
+    
+    document.getElementById('modal-net-price').innerText = `฿${basePrice.toFixed(2)}`;
+    document.getElementById('modal-vat-amount').innerText = `฿${vatVal.toFixed(2)}`;
+    document.getElementById('modal-total-price').innerText = `฿${totalVal.toFixed(2)}`;
+
+    const imgEl = document.getElementById('modal-img');
+    if (imageUrl) {
+      imgEl.src = imageUrl;
+      imgEl.alt = title;
+      imgEl.classList.remove('hidden');
+    } else {
+      imgEl.classList.add('hidden');
+    }
+
+    const form = document.getElementById('index-buy-form');
+    if (form) form.action = `/buy/${modelId}`;
+
+    const okBox = document.getElementById('modal-wallet-ok');
+    const badBox = document.getElementById('modal-wallet-insufficient');
+    const submitBtn = document.getElementById('modal-submit-btn');
+
+    if (currentUserBalance >= totalVal) {
+      if (okBox) okBox.classList.remove('hidden');
+      if (badBox) badBox.classList.add('hidden');
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+      }
+      const remain = (currentUserBalance - totalVal).toFixed(2);
+      const remainEl = document.getElementById('modal-wallet-remain');
+      if (remainEl) remainEl.innerText = `฿${parseFloat(remain).toLocaleString('th-TH', {minimumFractionDigits: 2})}`;
+    } else {
+      if (okBox) okBox.classList.add('hidden');
+      if (badBox) {
+        badBox.classList.remove('hidden');
+        const shortAmt = (totalVal - currentUserBalance).toFixed(2);
+        document.getElementById('modal-wallet-short-text').innerText = `ต้องการ ฿${totalVal.toFixed(2)} แต่มีในกระเป๋า ฿${currentUserBalance.toFixed(2)} (ขาดอีก ฿${shortAmt})`;
+      }
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+      }
+    }
+
+    const modal = document.getElementById('index-buy-modal');
+    if (modal) modal.classList.remove('hidden');
+  }
+
+  function closeIndexBuyModal() {
+    const modal = document.getElementById('index-buy-modal');
+    if (modal) modal.classList.add('hidden');
+  }
+</script>
+
+<!-- Buy Confirmation Modal in Index -->
+<div id="index-buy-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 hidden" onclick="closeIndexBuyModal()">
+  <div class="bg-white border border-[#E7E2D9] rounded-3xl max-w-lg w-full p-6 sm:p-7 space-y-5 shadow-2xl relative" onclick="event.stopPropagation()">
+    
+    <!-- Close [X] Button -->
+    <button type="button" onclick="closeIndexBuyModal()" class="absolute top-5 right-5 w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-500 hover:text-stone-800 flex items-center justify-center transition" title="ปิดหน้าต่าง [X]">
+      <i class="fa-solid fa-xmark text-sm"></i>
+    </button>
+
+    <!-- Modal Title -->
+    <div class="space-y-1 pr-8">
+      <div class="flex items-center gap-2">
+        <div class="w-7 h-7 rounded-lg bg-[#FF6B4A]/10 text-[#FF6B4A] flex items-center justify-center text-xs">
+          <i class="fa-solid fa-cart-shopping"></i>
+        </div>
+        <h3 class="text-base font-extrabold text-[#1C1917]">ยืนยันการสั่งซื้อโมเดล 3 มิติ</h3>
+      </div>
+      <p class="text-xs text-stone-500">กรุณาตรวจสอบรายละเอียดรายการและยืนยันการทำรายการ</p>
+    </div>
+
+    <!-- Item Preview Card -->
+    <div class="flex items-center gap-3.5 p-3.5 bg-[#FAF8F5] rounded-2xl border border-[#E7E2D9]">
+      <div class="w-16 h-16 rounded-xl bg-white border border-[#E7E2D9] overflow-hidden flex-shrink-0 flex items-center justify-center p-1" id="modal-img-container">
+        <img id="modal-img" src="" alt="" class="w-full h-full object-contain">
+      </div>
+      <div class="space-y-0.5 min-w-0 flex-1">
+        <h4 class="font-bold text-xs text-[#1C1917] truncate" id="modal-title"></h4>
+        <p class="text-[11px] text-stone-500 truncate" id="modal-category-format"></p>
+        <p class="text-[11px] text-stone-400 truncate" id="modal-author"></p>
+      </div>
+    </div>
+
+    <!-- Financial Breakdown -->
+    <div class="space-y-2 p-3.5 rounded-2xl bg-white border border-[#E7E2D9] text-xs">
+      <div class="flex items-center justify-between text-stone-500">
+        <span>{{ t('model_price_base') }}</span>
+        <span class="font-mono text-stone-700 font-semibold" id="modal-net-price">฿0.00</span>
+      </div>
+      <div class="flex items-center justify-between text-stone-500">
+        <span class="flex items-center gap-1">
+          <span>{{ t('vat_amount') }}</span>
+          <span class="text-[9px] px-1 py-0.2 rounded bg-purple-100 text-purple-700 font-bold">7%</span>
+        </span>
+        <span class="font-mono text-purple-700 font-semibold" id="modal-vat-amount">฿0.00</span>
+      </div>
+      <div class="flex items-center justify-between font-bold pt-2 border-t border-[#E7E2D9] text-sm text-[#1C1917]">
+        <div>
+          <span>{{ t('total_payment') }}</span>
+          <span class="block text-[10px] font-normal text-purple-700">{{ t('vat_included') }}</span>
+        </div>
+        <span class="font-mono text-[#FF6B4A] text-base font-black" id="modal-total-price">฿0.00</span>
+      </div>
+    </div>
+
+    <!-- Wallet Balance Status Card -->
+    {% if current_user.is_authenticated %}
+      <div id="modal-wallet-ok" class="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 space-y-1">
+        <div class="flex items-center justify-between font-medium">
+          <span>ยอดเงินในกระเป๋าของคุณ:</span>
+          <span class="font-mono font-bold">฿{{ "%.2f"|format(current_user.wallet_balance) }}</span>
+        </div>
+        <div class="flex items-center justify-between text-emerald-700 font-bold">
+          <span>ยอดเงินคงเหลือหลังสั่งซื้อ:</span>
+          <span class="font-mono" id="modal-wallet-remain">฿0.00</span>
+        </div>
+      </div>
+      <div id="modal-wallet-insufficient" class="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-800 space-y-2 hidden">
+        <div class="flex items-center gap-2 font-bold">
+          <i class="fa-solid fa-circle-exclamation text-rose-500"></i>
+          <span>ยอดเงินในกระเป๋าของคุณไม่เพียงพอ</span>
+        </div>
+        <p class="text-[11px] text-rose-600" id="modal-wallet-short-text">
+          ต้องการเงินเพิ่มเติมสำหรับการซื้อสินค้านี้
+        </p>
+        <div class="pt-1">
+          <a href="{{ url_for('topup') }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#FF6B4A] text-white font-bold text-xs hover:bg-[#E85938] transition shadow-xs">
+            <i class="fa-solid fa-plus text-[10px]"></i> เติมเงินเข้ากระเป๋าเดี๋ยวนี้
+          </a>
+        </div>
+      </div>
+    {% endif %}
+
+    <!-- Confirmation Buttons (ยืนยันการซื้อ & ยกเลิก) -->
+    <div class="flex items-center justify-end gap-3 pt-2 border-t border-[#E7E2D9]">
+      <!-- ปุ่มยกเลิก -->
+      <button type="button" onclick="closeIndexBuyModal()"
+              class="px-5 py-2.5 rounded-xl text-xs font-bold text-stone-600 bg-[#FAF8F5] border border-[#E7E2D9] hover:bg-stone-200 transition">
+        ยกเลิก
+      </button>
+
+      {% if current_user.is_authenticated %}
+        <!-- ปุ่มยืนยันการซื้อ -->
+        <form method="POST" id="index-buy-form" action="" class="inline">
+          <button type="submit" id="modal-submit-btn"
+                  class="px-6 py-2.5 rounded-xl text-xs font-bold text-white bg-[#FF6B4A] hover:bg-[#E85938] shadow-md shadow-[#FF6B4A]/25 transition flex items-center gap-2">
+            <i class="fa-solid fa-check"></i>
+            <span>ยืนยันการสั่งซื้อ</span>
+          </button>
+        </form>
+      {% else %}
+        <a href="{{ url_for('login') }}" class="px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-[#FF6B4A] hover:bg-[#E85938] transition">
+          เข้าสู่ระบบเพื่อซื้อ
+        </a>
+      {% endif %}
+    </div>
+
+  </div>
+</div>
+{% endblock %}

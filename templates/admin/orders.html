@@ -1,0 +1,92 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}ประวัติการสั่งซื้อ Real-time{% endblock %}
+{% block page_title %}รายการคำสั่งซื้อ (Orders & Transactions){% endblock %}
+{% block page_subtitle %}ประวัติการสั่งซื้อและดาวน์โหลดโมเดล 3D แบบ Real-time{% endblock %}
+
+{% block head %}
+  <meta http-equiv="refresh" content="30">
+{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+  <div class="bg-[#161412] rounded-2xl border border-white/5 overflow-hidden">
+    <div class="px-6 py-4 border-b border-white/5 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <h2 class="text-base font-bold text-white">ตารางการซื้อขายทั้งหมด</h2>
+        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Live
+        </span>
+      </div>
+      <span class="px-3 py-1 rounded-full text-xs font-semibold bg-white/5 text-white/60 border border-white/10">
+        {{ orders|length }} รายการ
+      </span>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-white/5 bg-white/[0.01]">
+            <th class="text-left px-5 py-3.5 text-[11px] uppercase tracking-wider text-white/40 font-semibold">รหัสสั่งซื้อ</th>
+            <th class="text-left px-5 py-3.5 text-[11px] uppercase tracking-wider text-white/40 font-semibold">วันเวลาที่ซื้อ</th>
+            <th class="text-left px-5 py-3.5 text-[11px] uppercase tracking-wider text-white/40 font-semibold">ผู้ซื้อ</th>
+            <th class="text-left px-5 py-3.5 text-[11px] uppercase tracking-wider text-white/40 font-semibold">โมเดล 3D</th>
+            <th class="text-left px-5 py-3.5 text-[11px] uppercase tracking-wider text-white/40 font-semibold">ราคา</th>
+            <th class="text-left px-5 py-3.5 text-[11px] uppercase tracking-wider text-white/40 font-semibold">สถานะ</th>
+            <th class="text-right px-5 py-3.5 text-[11px] uppercase tracking-wider text-white/40 font-semibold">จัดการ</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-white/5">
+          {% for order in orders %}
+          <tr class="hover:bg-white/[0.02] transition">
+            <td class="px-5 py-3.5 font-mono text-xs text-white/40">#ORD-{{ "%04d"|format(order.id) }}</td>
+            <td class="px-5 py-3.5 text-xs text-white/80 font-mono">{{ order.purchased_at.strftime('%d/%m/%Y %H:%M:%S') if order.purchased_at else '—' }}</td>
+            <td class="px-5 py-3.5">
+              <span class="text-white font-semibold text-xs block">{{ order.user.username }}</span>
+              <span class="text-[10px] text-white/40 font-mono">{{ order.user.email }}</span>
+            </td>
+            <td class="px-5 py-3.5">
+              <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-lg bg-white/5 border border-white/10 overflow-hidden flex items-center justify-center text-[#FF6B4A] flex-shrink-0">
+                  {% if order.model and order.model.thumbnail_url %}
+                    <img src="{{ order.model.thumbnail_url }}" alt="{{ order.model.title }}" class="w-full h-full object-cover">
+                  {% else %}
+                    <i class="fa-solid fa-cube text-xs text-[#FF6B4A]"></i>
+                  {% endif %}
+                </div>
+                <span class="text-white text-xs font-medium block truncate max-w-[220px]" title="{{ order.model.title if order.model else 'โมเดลถูกลบแล้ว' }}">
+                  {{ order.model.title if order.model else 'โมเดลถูกลบแล้ว' }}
+                </span>
+              </div>
+            </td>
+            <td class="px-5 py-3.5">
+              {% if order.price_paid == 0 %}
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-green-500/10 text-green-400 border border-green-500/20">ฟรี</span>
+              {% else %}
+                <span class="font-mono font-bold text-xs text-[#FF6B4A]">฿{{ "%.2f"|format(order.price_paid) }}</span>
+              {% endif %}
+            </td>
+            <td class="px-5 py-3.5">
+              <span class="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-400">
+                <i class="fa-solid fa-circle-check text-[9px]"></i> ชำระสำเร็จ
+              </span>
+            </td>
+            <td class="px-5 py-3.5 text-right">
+              <form action="{{ url_for('admin_delete_order', order_id=order.id) }}" method="POST"
+                    onsubmit="return confirm('ลบรายการสั่งซื้อ #ORD-{{ order.id }}?')">
+                <button type="submit" class="px-2.5 py-1 rounded-lg text-xs font-medium bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 transition">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              </form>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="7" class="px-6 py-12 text-center text-white/30 text-sm">ยังไม่มีรายการคำสั่งซื้อ</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

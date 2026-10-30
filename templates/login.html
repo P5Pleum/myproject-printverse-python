@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% block title %}เข้าสู่ระบบ | PrintVerse 3D{% endblock %}
+
+{% block content %}
+<div class="w-full flex-1 flex items-center justify-center px-6 sm:px-10 lg:px-16 py-10 lg:py-16">
+  <div class="w-full max-w-5xl bg-white border border-[#E7E2D9] rounded-3xl overflow-hidden shadow-sm grid grid-cols-1 lg:grid-cols-12 min-h-[580px]">
+    
+    <!-- Left Showcase Side (Editorial Gallery & 3D Artwork Aesthetic) -->
+    <div class="lg:col-span-6 bg-[#F5F2EB]/70 border-b lg:border-b-0 lg:border-r border-[#E7E2D9] p-8 sm:p-12 flex flex-col justify-between relative overflow-hidden">
+      
+      <!-- Top Label -->
+      <div class="relative z-10 space-y-4">
+        <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-white border border-[#E7E2D9] text-[11px] font-semibold tracking-wider text-stone-600 uppercase">
+          <span class="w-1.5 h-1.5 rounded-full bg-[#FF6B4A]"></span>
+          <span>Curated 3D Design Archive</span>
+        </div>
+
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-[#1C1917] tracking-tight leading-snug">
+          ศูนย์รวมไฟล์งานพิมพ์ <br>
+          <span class="text-[#FF6B4A]">ระดับพรีเมียม</span>
+        </h2>
+        <p class="text-xs sm:text-sm text-stone-600 leading-relaxed max-w-sm">
+          คลังไฟล์โมเดล .STL, .3MF, .STEP คุณภาพสูง พร้อมการตั้งค่า Slice และข้อมูลการใช้วัสดุที่ทดสอบจริง
+        </p>
+      </div>
+
+      <!-- Center Official Logo Showcase -->
+      <div class="my-8 relative z-10 flex items-center justify-center">
+        <div class="relative w-full max-w-[380px] p-6 sm:p-8 rounded-3xl bg-white border border-[#E7E2D9] shadow-md flex items-center justify-center group hover:shadow-lg hover:border-[#FF6B4A]/40 transition duration-300">
+          <img src="{{ url_for('serve_photo', filename='LOGO.png') }}" 
+               alt="PrintVerse.3D Logo" 
+               class="w-full h-auto max-h-48 object-contain group-hover:scale-105 transition duration-300">
+        </div>
+      </div>
+
+      <!-- Bottom Highlights Bar -->
+      <div class="relative z-10 pt-4 border-t border-[#E7E2D9]/80 flex items-center justify-between text-[11px] text-stone-500">
+        <div class="flex items-center space-x-1.5">
+          <i class="fa-solid fa-shield-halved text-[#FF6B4A]"></i>
+          <span>Verified G-Code Ready</span>
+        </div>
+        <div class="flex items-center space-x-1.5">
+          <i class="fa-solid fa-bolt text-amber-500"></i>
+          <span>16+ โมเดลในคอลเลกชัน</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Right Form Side (Warm Minimal Interactive Portal) -->
+    <div class="lg:col-span-6 p-8 sm:p-12 flex flex-col justify-center bg-white">
+      
+      <div class="w-full max-w-sm mx-auto space-y-6">
+        
+        <!-- Welcome Title -->
+        <div>
+          <h3 class="text-2xl font-extrabold text-[#1C1917] tracking-tight">ยินดีต้อนรับสู่ PrintVerse</h3>
+          <p class="text-xs text-stone-500 mt-1">เข้าสู่ระบบเพื่อสำรวจและดาวน์โหลดไฟล์ 3D ในตลาด</p>
+        </div>
+
+        <!-- Clean Segmented Tabs -->
+        <div class="grid grid-cols-2 gap-1 p-1 bg-[#FAF8F5] border border-[#E7E2D9] rounded-2xl text-xs font-bold">
+          <a href="{{ url_for('login') }}" class="py-2.5 text-center rounded-xl bg-white text-[#1C1917] shadow-xs transition">
+            เข้าสู่ระบบ
+          </a>
+          <a href="{{ url_for('register') }}" class="py-2.5 text-center rounded-xl text-stone-500 hover:text-[#1C1917] transition">
+            สมัครสมาชิก
+          </a>
+        </div>
+
+        <!-- Form -->
+        <form method="POST" action="{{ url_for('login') }}" class="space-y-4">
+          <div>
+            <label for="email" class="block text-[11px] font-semibold text-stone-600 mb-1.5 uppercase tracking-wider">อีเมล</label>
+            <input type="email" id="email" name="email" required placeholder="name@example.com"
+              class="w-full px-4 py-3 rounded-xl bg-[#FAF8F5] border border-[#E7E2D9] text-[#1C1917] placeholder-stone-400 focus:outline-none focus:bg-white focus:border-[#FF6B4A] focus:ring-2 focus:ring-[#FF6B4A]/10 transition text-sm">
+          </div>
+
+          <div>
+            <div class="flex items-center justify-between mb-1.5">
+              <label for="password" class="block text-[11px] font-semibold text-stone-600 uppercase tracking-wider">รหัสผ่าน</label>
+              <a href="{{ url_for('forgot_password') }}" class="text-[11px] font-semibold text-[#FF6B4A] hover:underline transition">
+                ลืมรหัสผ่าน?
+              </a>
+            </div>
+            <div class="relative">
+              <input type="password" id="password" name="password" required placeholder="••••••••"
+                class="w-full pl-4 pr-11 py-3 rounded-xl bg-[#FAF8F5] border border-[#E7E2D9] text-[#1C1917] placeholder-stone-400 focus:outline-none focus:bg-white focus:border-[#FF6B4A] focus:ring-2 focus:ring-[#FF6B4A]/10 transition text-sm">
+              <button type="button" onclick="togglePasswordVisibility('password', this)" 
+                class="absolute right-3.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700 transition p-1 text-sm focus:outline-none"
+                title="คลิกเพื่อดูหรือซ่อนรหัสผ่าน">
+                <i class="fa-solid fa-eye"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="pt-2">
+            <button type="submit" class="w-full py-3.5 px-4 rounded-xl font-bold text-sm text-white bg-[#FF6B4A] hover:bg-[#E85938] shadow-md shadow-[#FF6B4A]/25 transition flex items-center justify-center space-x-2">
+              <span>เข้าสู่ระบบและเริ่มช้อปโมเดล</span>
+              <i class="fa-solid fa-arrow-right text-xs"></i>
+            </button>
+          </div>
+        </form>
+
+      </div>
+
+    </div>
+
+  </div>
+</div>
+{% endblock %}

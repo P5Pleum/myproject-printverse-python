@@ -1,0 +1,386 @@
+"""
+Module: translations.py
+Provides bilingual (Thai / English) dictionary and helper function t() for PrintVerse Studio.
+"""
+
+TRANSLATIONS = {
+    "th": {
+        # App Info & Brand
+        "brand_name": "PrintVerse Studio",
+        "brand_tagline": "ศูนย์รวมโมเดล 3 มิติ เพื่อ Maker ยุคใหม่",
+        "brand_desc": "ค้นหา ดาวน์โหลด และแบ่งปันไฟล์โมเดล 3 มิติคุณภาพสูง พร้อมพิมพ์ได้ทันที",
+
+        # Language Switcher
+        "lang_switch_to": "Switch to English",
+        "lang_current": "ไทย",
+
+        # Navbar
+        "nav_home": "หน้าหลัก",
+        "nav_explore": "ตลาดโมเดล",
+        "nav_favorites": "ที่ถูกใจ",
+        "nav_cart": "ตะกร้า",
+        "nav_library": "คลังของฉัน",
+        "nav_upload": "ลงขายโมเดล",
+        "nav_topup": "เติมเงิน",
+        "nav_withdraw": "ถอนเงิน",
+        "nav_history": "ประวัติการเงิน",
+        "nav_receipts": "ประวัติใบเสร็จ",
+        "nav_profile": "โปรไฟล์ของฉัน",
+        "nav_admin": "แผงผู้ดูแลระบบ",
+        "nav_logout": "ออกจากระบบ",
+        "nav_login": "เข้าสู่ระบบ",
+        "nav_register": "สมัครสมาชิก",
+        "nav_balance": "ยอดเงินคงเหลือ",
+
+        # Search & Filtering
+        "search_placeholder": "ค้นหาโมเดล 3D, แท็ก, หรือสเปกเครื่องพิมพ์...",
+        "search_btn": "ค้นหา",
+        "category_all": "ทั้งหมด",
+        "category_gadgets": "อุปกรณ์ & เครื่องมือ",
+        "category_art": "ศิลปะ & ประติมากรรม",
+        "category_toys": "ของเล่น & เกม",
+        "category_home": "ของใช้ในบ้าน",
+        "category_miniatures": "โมเดลจิ๋ว & ฟิกเกอร์",
+        "sort_by": "จัดเรียงตาม",
+        "sort_newest": "มาใหม่ล่าสุด",
+        "sort_popular": "ยอดนิยมสูงสุด",
+        "sort_price_low": "ราคา: ต่ำไปสูง",
+        "sort_price_high": "ราคา: สูงไปต่ำ",
+
+        # Model Cards & Details
+        "free": "ฟรี",
+        "vat_included": "รวม VAT 7% แล้ว",
+        "vat_notice_included": "ราคารวมภาษีมูลค่าเพิ่ม (VAT 7%) เรียบร้อยแล้ว",
+        "by_creator": "โดย",
+        "buy_now": "ซื้อทันที",
+        "add_cart": "ใส่ตะกร้า",
+        "download": "ดาวน์โหลดไฟล์",
+        "downloads_count": "ดาวน์โหลด",
+        "likes_count": "ถูกใจ",
+        "seller_profile": "ผู้สร้าง / ผู้ขาย",
+        "format": "ฟอร์แมตไฟล์",
+        "file_size": "ขนาดไฟล์",
+        "printer_setup": "เครื่องพิมพ์ที่แนะนำ",
+        "description": "รายละเอียดโมเดล",
+        "already_owned": "คุณเป็นเจ้าของโมเดลนี้แล้ว",
+        "own_model_notice": "โมเดลนี้เป็นของคุณเอง",
+
+        # Purchase Confirmation Modal & Breakdown
+        "confirm_purchase_title": "ยืนยันการสั่งซื้อโมเดล 3D",
+        "confirm_purchase_msg": "กรุณาตรวจสอบรายละเอียดก่อนยืนยันการชำระเงิน",
+        "model_name": "ชื่อโมเดล",
+        "model_price_base": "ราคาสินค้า (ก่อน VAT)",
+        "vat_amount": "ภาษีมูลค่าเพิ่ม (VAT 7%)",
+        "total_payment": "ยอดรวมที่ต้องชำระสุทธิ",
+        "wallet_balance_current": "ยอดเงินคงเหลือในกระเป๋า",
+        "wallet_balance_after": "ยอดเงินคงเหลือหลังชำระ",
+        "confirm_btn": "ยืนยันการซื้อ",
+        "cancel_btn": "ยกเลิก",
+        "close_btn": "ปิด",
+        "insufficient_balance": "ยอดเงินในกระเป๋าไม่เพียงพอ กรุณาเติมเงินก่อนทำรายการ",
+        "purchase_success": "สั่งซื้อโมเดลสำเร็จ!",
+        "purchase_slip_title": "สลิปการสั่งซื้อโมเดล 3D",
+
+        # Profile & Avatar
+        "profile_title": "โปรไฟล์ของฉัน",
+        "profile_subtitle": "จัดการข้อมูลส่วนตัว รูปโปรไฟล์ และการตั้งค่าเครื่องพิมพ์ 3D",
+        "avatar_section_title": "รูปภาพโปรไฟล์",
+        "avatar_upload_device": "อัปโหลดจากเครื่อง",
+        "avatar_take_photo": "ถ่ายรูปจากกล้อง",
+        "avatar_camera_start": "เปิดกล้อง",
+        "avatar_camera_snap": "ถ่ายภาพ",
+        "avatar_camera_retake": "ถ่ายใหม่",
+        "avatar_camera_save": "ใช้รูปนี้เป็นโปรไฟล์",
+        "avatar_camera_stop": "ปิดกล้อง",
+        "avatar_select_file": "เลือกไฟล์รูปภาพ (JPG, PNG, WEBP)",
+        "avatar_upload_btn": "บันทึกรูปโปรไฟล์",
+        "avatar_remove_btn": "ลบรูปโปรไฟล์",
+        "profile_username": "ชื่อผู้ใช้",
+        "profile_email": "อีเมล",
+        "profile_phone": "เบอร์โทรศัพท์",
+        "profile_address": "ที่อยู่ (สำหรับจัดส่งและติดต่อ)",
+        "profile_verify_password": "รหัสผ่านเข้าสู่ระบบปัจจุบัน (เพื่อยืนยันการบันทึก)",
+        "profile_badge": "ป้าย Maker Badge",
+        "profile_bio": "คำแนะนำตัว (Bio)",
+        "profile_printer": "เครื่องพิมพ์ 3D ที่ใช้งาน",
+        "avatar_updated_success": "อัปเดตรูปโปรไฟล์เรียบร้อยแล้ว",
+        "avatar_removed_success": "ลบรูปโปรไฟล์เรียบร้อยแล้ว",
+        "avatar_crop_modal_title": "ปรับแต่งและจัดตำแหน่งรูปโปรไฟล์",
+        "avatar_crop_modal_sub": "คลิกค้างแล้วลากเพื่อเลื่อนตำแหน่ง หมุนภาพ หรือซูมเข้า-ออกให้ได้มุมที่ถูกใจเหมือน Facebook / Instagram",
+        "avatar_crop_adjust_existing": "ปรับเลื่อนตำแหน่งรูปปัจจุบัน",
+        "avatar_crop_zoom": "ระดับการซูม",
+        "avatar_crop_rotate_left": "หมุนซ้าย 90°",
+        "avatar_crop_rotate_right": "หมุนขวา 90°",
+        "avatar_crop_flip": "กลับด้านซ้าย-ขวา",
+        "avatar_crop_reset": "รีเซ็ตตำแหน่ง",
+        "avatar_crop_preview_title": "ตัวอย่างรูปโปรไฟล์",
+        "avatar_crop_preview_hint": "มุมมองที่จะปรากฏบนการ์ดโมเดลและแถบเมนู",
+        "avatar_crop_cancel": "ยกเลิก",
+        "avatar_crop_apply": "บันทึกรูปโปรไฟล์นี้",
+        "avatar_crop_saving": "กำลังประมวลผลและบันทึก...",
+        "pw_tab_current": "ใช้รหัสผ่านปัจจุบัน",
+        "pw_tab_otp": "ลืมรหัสผ่าน (ขอ OTP ทางเมล)",
+        "pw_forgot_hint": "ลืมรหัสผ่านปัจจุบัน? ขอรับรหัส OTP ทางอีเมลเพื่อเปลี่ยนรหัสผ่าน",
+        "pw_otp_btn_send": "ขอรับรหัส OTP 6 หลักทางอีเมล",
+        "pw_otp_submit_btn": "ยืนยันรหัส OTP และตั้งรหัสผ่านใหม่",
+
+        # Topup (0% Fee)
+        "topup_title": "เติมเงินเข้ากระเป๋า Wallet",
+        "topup_subtitle": "เติมเงินผ่าน QR Code พร้อมเพย์ หรือ TrueMoney ฟรีค่าธรรมเนียม 100% เงินเข้าเต็ม",
+        "topup_amount_label": "จำนวนเงินที่ต้องการเติม (บาท)",
+        "topup_method_label": "ช่องทางการชำระเงิน",
+        "topup_fee_tag": "ฟรีค่าธรรมเนียม 0%",
+        "topup_net_label": "ยอดเงินสุทธิที่จะเข้ากระเป๋า",
+        "topup_sender_label": "เบอร์โทรศัพท์ที่ใช้โอน / บัญชีต้นทาง",
+        "topup_time_label": "วัน-เวลาที่โอนเงิน",
+        "topup_slip_label": "แนบรูปสลิปหลักฐานการโอนเงิน",
+        "topup_submit_btn": "ยืนยันการแจ้งโอนเงิน",
+        "topup_slip_title": "สลิปแจ้งการเติมเงิน",
+
+        # Withdrawal (1% Fee)
+        "withdraw_title": "ถอนเงินออกจาก Wallet",
+        "withdraw_subtitle": "ถอนเงินรายได้จากการขายโมเดลเข้าบัญชีธนาคาร (ค่าบริการระบบ 1%)",
+        "withdraw_amount_label": "จำนวนเงินที่ต้องการถอน (บาท)",
+        "withdraw_fee_notice": "คิดค่าบริการระบบ 1% และจะหักออกจากยอดถอนทันที",
+        "withdraw_fee_label": "ค่าบริการระบบ (1%)",
+        "withdraw_net_label": "ยอดเงินสุทธิที่จะได้รับเข้าบัญชี",
+        "withdraw_bank_label": "ธนาคารปลายทาง / พร้อมเพย์",
+        "withdraw_account_label": "เลขที่บัญชี หรือ เบอร์พร้อมเพย์",
+        "withdraw_name_label": "ชื่อบัญชีผู้รับเงิน",
+        "withdraw_submit_btn": "ยืนยันคำขอถอนเงิน",
+        "withdraw_slip_title": "สลิปคำขอถอนเงิน",
+
+        # Slips & PDF
+        "slip_header": "หลักฐานการทำรายการอิเล็กทรอนิกส์",
+        "slip_download_pdf": "ดาวน์โหลดสลิป PDF",
+        "slip_date": "วัน-เวลาที่ทำรายการ",
+        "slip_ref": "รหัสอ้างอิงธุรกรรม",
+        "slip_type": "ประเภทรายการ",
+        "slip_user": "ผู้ทำรายการ",
+        "slip_status": "สถานะรายการ",
+        "status_pending": "รอการตรวจสอบ",
+        "status_approved": "สำเร็จ / อนุมัติแล้ว",
+        "status_rejected": "ปฏิเสธ",
+
+        # Transactions & Receipts History
+        "trans_history_title": "ประวัติการทำรายการทางการเงิน",
+        "trans_history_subtitle": "ตรวจสอบประวัติการเติมเงินและคำขอถอนเงินทั้งหมดของคุณ",
+        "receipts_title": "ประวัติใบเสร็จการสั่งซื้อ",
+        "receipts_subtitle": "ใบเสร็จรับเงินสำหรับโมเดล 3D ทุกรายการที่คุณเคยสั่งซื้อ",
+        "receipt_no": "เลขที่ใบเสร็จ",
+        "view_receipt": "ดูใบเสร็จ",
+        "view_slip": "ดูสลิป",
+        "no_transactions": "ยังไม่มีรายการธุรกรรม",
+        "no_receipts": "ยังไม่มีประวัติใบเสร็จการสั่งซื้อ",
+
+        # Library & Favorites
+        "library_title": "คลังโมเดล 3D ของฉัน",
+        "library_subtitle": "โมเดลที่คุณเป็นเจ้าของ สามารถดาวน์โหลดไฟล์ STL/3MF ได้ทุกเมื่อ",
+        "favorites_title": "โมเดลที่ถูกใจ",
+        "favorites_subtitle": "รายการโมเดลที่คุณบันทึกไว้เพื่อพิจารณาหรือซื้อในภายหลัง",
+        "empty_library": "คุณยังไม่มีโมเดลในคลัง เริ่มสำรวจตลาดได้เลย",
+        "empty_favorites": "ยังไม่มีโมเดลที่ถูกใจ กดหัวใจที่โมเดลที่คุณชอบได้เลย",
+
+        # Footer
+        "footer_rights": "สงวนลิขสิทธิ์ทั้งหมด",
+        "footer_support": "ศูนย์ช่วยเหลือ & กฎระเบียบชุมชน",
+    },
+
+    "en": {
+        # App Info & Brand
+        "brand_name": "PrintVerse Studio",
+        "brand_tagline": "The 3D Printing Hub for Modern Makers",
+        "brand_desc": "Discover, download, and share high-quality 3D printing models ready to print.",
+
+        # Language Switcher
+        "lang_switch_to": "เปลี่ยนเป็นภาษาไทย",
+        "lang_current": "English",
+
+        # Navbar
+        "nav_home": "Home",
+        "nav_explore": "Marketplace",
+        "nav_favorites": "Favorites",
+        "nav_cart": "Cart",
+        "nav_library": "My Library",
+        "nav_upload": "Sell Model",
+        "nav_topup": "Top-up",
+        "nav_withdraw": "Withdraw",
+        "nav_history": "Transactions",
+        "nav_receipts": "Receipts",
+        "nav_profile": "My Profile",
+        "nav_admin": "Admin Dashboard",
+        "nav_logout": "Logout",
+        "nav_login": "Login",
+        "nav_register": "Register",
+        "nav_balance": "Balance",
+
+        # Search & Filtering
+        "search_placeholder": "Search 3D models, tags, or printer specs...",
+        "search_btn": "Search",
+        "category_all": "All",
+        "category_gadgets": "Gadgets & Tools",
+        "category_art": "Art & Sculpture",
+        "category_toys": "Toys & Games",
+        "category_home": "Home & Living",
+        "category_miniatures": "Miniatures & Figures",
+        "sort_by": "Sort by",
+        "sort_newest": "Newest First",
+        "sort_popular": "Most Popular",
+        "sort_price_low": "Price: Low to High",
+        "sort_price_high": "Price: High to Low",
+
+        # Model Cards & Details
+        "free": "Free",
+        "vat_included": "VAT 7% Included",
+        "vat_notice_included": "Price includes 7% Value Added Tax (VAT)",
+        "by_creator": "by",
+        "buy_now": "Buy Now",
+        "add_cart": "Add to Cart",
+        "download": "Download File",
+        "downloads_count": "downloads",
+        "likes_count": "likes",
+        "seller_profile": "Creator / Seller",
+        "format": "File Format",
+        "file_size": "File Size",
+        "printer_setup": "Recommended Printer",
+        "description": "Model Description",
+        "already_owned": "You already own this model",
+        "own_model_notice": "This is your own model",
+
+        # Purchase Confirmation Modal & Breakdown
+        "confirm_purchase_title": "Confirm 3D Model Purchase",
+        "confirm_purchase_msg": "Please verify purchase details before confirming payment",
+        "model_name": "Model Title",
+        "model_price_base": "Base Price (Excl. VAT)",
+        "vat_amount": "Value Added Tax (VAT 7%)",
+        "total_payment": "Total Net Payment",
+        "wallet_balance_current": "Current Wallet Balance",
+        "wallet_balance_after": "Balance After Payment",
+        "confirm_btn": "Confirm Purchase",
+        "cancel_btn": "Cancel",
+        "close_btn": "Close",
+        "insufficient_balance": "Insufficient wallet balance. Please top up first.",
+        "purchase_success": "Purchase successful!",
+        "purchase_slip_title": "3D Model Purchase Slip",
+
+        # Profile & Avatar
+        "profile_title": "My Profile",
+        "profile_subtitle": "Manage personal info, avatar picture, and 3D printer setup",
+        "avatar_section_title": "Profile Avatar",
+        "avatar_upload_device": "Upload from Device",
+        "avatar_take_photo": "Take Photo with Camera",
+        "avatar_camera_start": "Start Camera",
+        "avatar_camera_snap": "Snap Photo",
+        "avatar_camera_retake": "Retake",
+        "avatar_camera_save": "Use This Photo",
+        "avatar_camera_stop": "Stop Camera",
+        "avatar_select_file": "Select image file (JPG, PNG, WEBP)",
+        "avatar_upload_btn": "Save Profile Picture",
+        "avatar_remove_btn": "Reset Avatar",
+        "profile_username": "Username",
+        "profile_email": "Email",
+        "profile_phone": "Phone Number",
+        "profile_address": "Address (Shipping & Contact)",
+        "profile_verify_password": "Current Login Password (Required to save)",
+        "profile_badge": "Maker Badge",
+        "profile_bio": "Maker Bio",
+        "profile_printer": "3D Printer Setup",
+        "profile_save_btn": "Save Profile Changes",
+        "avatar_updated_success": "Profile avatar updated successfully",
+        "avatar_removed_success": "Profile avatar reset to default",
+        "avatar_crop_modal_title": "Adjust & Reposition Profile Picture",
+        "avatar_crop_modal_sub": "Click & drag to reposition, rotate, or zoom in/out to fit perfectly like Facebook / Instagram",
+        "avatar_crop_adjust_existing": "Reposition Current Picture",
+        "avatar_crop_zoom": "Zoom Level",
+        "avatar_crop_rotate_left": "Rotate 90° Left",
+        "avatar_crop_rotate_right": "Rotate 90° Right",
+        "avatar_crop_flip": "Flip Horizontal",
+        "avatar_crop_reset": "Reset Position",
+        "avatar_crop_preview_title": "Avatar Preview",
+        "avatar_crop_preview_hint": "How it will appear on cards & navigation bar",
+        "avatar_crop_cancel": "Cancel",
+        "avatar_crop_apply": "Apply & Save Avatar",
+        "avatar_crop_saving": "Processing & saving...",
+        "pw_tab_current": "Use Current Password",
+        "pw_tab_otp": "Forgot Password (Use OTP)",
+        "pw_forgot_hint": "Forgot current password? Reset via Email OTP",
+        "pw_otp_btn_send": "Request 6-digit OTP via Email",
+        "pw_otp_submit_btn": "Verify OTP & Update Password",
+
+        # Topup (0% Fee)
+        "topup_title": "Top-up Wallet",
+        "topup_subtitle": "Top-up via PromptPay QR or TrueMoney with 0% fees. 100% credited to your wallet.",
+        "topup_amount_label": "Amount to Top-up (THB)",
+        "topup_method_label": "Payment Method",
+        "topup_fee_tag": "Zero Fee (0%)",
+        "topup_net_label": "Net Amount Credited to Wallet",
+        "topup_sender_label": "Sender Phone / Source Bank",
+        "topup_time_label": "Transfer Date & Time",
+        "topup_slip_label": "Attach Payment Slip Image",
+        "topup_submit_btn": "Submit Payment Notification",
+        "topup_slip_title": "Top-up Notification Slip",
+
+        # Withdrawal (1% Fee)
+        "withdraw_title": "Withdraw from Wallet",
+        "withdraw_subtitle": "Withdraw creator earnings to your bank account (1% system service fee applies)",
+        "withdraw_amount_label": "Withdrawal Amount (THB)",
+        "withdraw_fee_notice": "A 1% service fee is deducted from the withdrawal amount.",
+        "withdraw_fee_label": "Service Fee (1%)",
+        "withdraw_net_label": "Net Amount Transferred to Bank",
+        "withdraw_bank_label": "Destination Bank / PromptPay",
+        "withdraw_account_label": "Account Number or PromptPay ID",
+        "withdraw_name_label": "Account Holder Name",
+        "withdraw_submit_btn": "Submit Withdrawal Request",
+        "withdraw_slip_title": "Withdrawal Request Slip",
+
+        # Slips & PDF
+        "slip_header": "Electronic Transaction Proof",
+        "slip_download_pdf": "Download Slip (PDF)",
+        "slip_date": "Transaction Date & Time",
+        "slip_ref": "Reference ID",
+        "slip_type": "Transaction Type",
+        "slip_user": "User / Payer",
+        "slip_status": "Status",
+        "status_pending": "Pending Review",
+        "status_approved": "Completed / Approved",
+        "status_rejected": "Rejected",
+
+        # Transactions & Receipts History
+        "trans_history_title": "Financial Transactions History",
+        "trans_history_subtitle": "Track all your top-ups and withdrawal requests in one place",
+        "receipts_title": "Purchase Receipts History",
+        "receipts_subtitle": "Official receipts for all 3D models you have purchased",
+        "receipt_no": "Receipt #",
+        "view_receipt": "View Receipt",
+        "view_slip": "View Slip",
+        "no_transactions": "No transactions recorded yet",
+        "no_receipts": "No purchase receipts found yet",
+
+        # Library & Favorites
+        "library_title": "My 3D Library",
+        "library_subtitle": "3D models you own. Ready to re-download STL/3MF anytime.",
+        "favorites_title": "My Favorite Models",
+        "favorites_subtitle": "Models you saved for future consideration or purchase",
+        "empty_library": "Your library is empty. Start exploring the marketplace!",
+        "empty_favorites": "No favorites yet. Click the heart icon on any model you like!",
+
+        # Footer
+        "footer_rights": "All rights reserved",
+        "footer_support": "Help Center & Community Guidelines",
+    }
+}
+
+
+def get_translation(lang: str, key: str, default: str = None, **kwargs) -> str:
+    """Helper function to fetch translated text with fallback and string formatting."""
+    lang = lang if lang in TRANSLATIONS else "th"
+    text = TRANSLATIONS[lang].get(key)
+    if text is None:
+        # Fallback to Thai or provided default or key itself
+        text = TRANSLATIONS["th"].get(key, default or key)
+    if kwargs:
+        try:
+            return text.format(**kwargs)
+        except Exception:
+            return text
+    return text

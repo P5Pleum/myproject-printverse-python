@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+{% block title %}สลีปเติมเงิน #PV-TOP-{{ "%04d"|format(tx.id) }} | PrintVerse 3D{% endblock %}
+
+{% block content %}
+<div class="w-full flex-1 max-w-2xl mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-6">
+
+  <!-- Top Action Bar (No Print) -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 no-print">
+    <div class="flex items-center gap-2">
+      <a href="{{ url_for('topup') }}" class="inline-flex items-center gap-1.5 text-xs font-semibold text-stone-600 hover:text-[#1C1917] transition bg-white border border-[#E7E2D9] px-3.5 py-2 rounded-xl shadow-xs">
+        <i class="fa-solid fa-arrow-left text-[11px]"></i>
+        <span>เติมเงิน</span>
+      </a>
+      <a href="{{ url_for('wallet_transactions') }}" class="inline-flex items-center gap-1.5 text-xs font-semibold text-purple-700 hover:text-purple-900 transition bg-white border border-[#E7E2D9] px-3.5 py-2 rounded-xl shadow-xs" title="ดูประวัติการทำรายการของบัญชี">
+        <i class="fa-solid fa-receipt text-[11px]"></i>
+        <span>ประวัติการทำรายการ</span>
+      </a>
+    </div>
+
+    <div class="flex items-center gap-2 justify-end">
+      <!-- Print Button -->
+      <button type="button" onclick="window.print()" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-stone-700 bg-white border border-[#E7E2D9] hover:bg-stone-50 transition shadow-xs">
+        <i class="fa-solid fa-print"></i>
+        <span>พิมพ์</span>
+      </button>
+
+      <!-- Download PDF Button -->
+      <button type="button" onclick="downloadSlipAsPDF('printable-slip', 'PrintVerse_Topup_PV-TOP-{{ '%04d'|format(tx.id) }}.pdf')" 
+              class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition shadow-sm shadow-emerald-600/20">
+        <i class="fa-solid fa-file-pdf"></i>
+        <span>ดาวน์โหลด PDF</span>
+      </button>
+
+      <!-- [X] Close Button -->
+      <a href="{{ url_for('wallet_transactions') }}" 
+         class="w-9 h-9 rounded-xl bg-white border border-[#E7E2D9] text-stone-400 hover:text-stone-800 hover:bg-stone-50 flex items-center justify-center text-sm font-bold shadow-xs transition" 
+         title="ปิดสลีป [X]">
+        <i class="fa-solid fa-xmark"></i>
+      </a>
+    </div>
+  </div>
+
+  <!-- Authentic Mobile Banking E-Slip Card -->
+  <div id="printable-slip" class="bg-white border border-[#E7E2D9] rounded-3xl overflow-hidden shadow-md p-6 sm:p-8 space-y-6 relative">
+    
+    <!-- Slip Header Banner -->
+    <div class="flex items-start justify-between border-b border-[#E7E2D9] pb-6">
+      <div class="space-y-1">
+        <div class="flex items-center gap-2">
+          <img src="{{ url_for('serve_photo', filename='LOGO.png') }}" alt="PrintVerse" class="h-8 w-auto object-contain">
+          <span class="font-extrabold text-sm tracking-tight text-[#1C1917]">PrintVerse 3D</span>
+        </div>
+        <p class="text-[11px] text-stone-400 font-medium">ใบบันทึกรายการเติมเงินอิเล็กทรอนิกส์ (E-Slip)</p>
+      </div>
+      <div class="text-right">
+        <span class="inline-block px-2.5 py-1 rounded-lg bg-[#FAF8F5] border border-[#E7E2D9] font-mono text-[11px] font-bold text-stone-600">
+          #PV-TOP-{{ "%04d"|format(tx.id) }}
+        </span>
+        <p class="text-[10px] text-stone-400 mt-1">{{ tx.created_at.strftime('%d/%m/%Y %H:%M:%S') }}</p>
+      </div>
+    </div>
+
+    <!-- Amount Hero & Status Badge -->
+    <div class="text-center py-2 space-y-3">
+      <div class="w-14 h-14 mx-auto rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center text-2xl shadow-xs">
+        <i class="fa-solid fa-arrow-down"></i>
+      </div>
+      <div>
+        <span class="text-xs font-bold text-stone-500 uppercase tracking-wider block">ยอดเงินเข้ากระเป๋า (ฟรีค่าธรรมเนียม 0%)</span>
+        <h2 class="text-3xl sm:text-4xl font-black text-emerald-600 font-mono tracking-tight mt-1">
+          +฿{{ "%.2f"|format(tx.net_amount) }}
+        </h2>
+        <p class="text-[11px] text-stone-400 mt-0.5">ยอดแจ้งโอน ฿{{ "%.2f"|format(tx.amount) }} • ฟรีค่าธรรมเนียม ฿0.00 (เข้ากระเป๋า 100%)</p>
+      </div>
+
+      <!-- Status Indicator -->
+      <div>
+        {% if tx.status == 'สำเร็จ' %}
+          <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+            <i class="fa-solid fa-circle-check text-[11px]"></i> ทำรายการสำเร็จ (เงินเข้ากระเป๋าเรียบร้อย)
+          </span>
+        {% elif tx.status == 'ปฏิเสธ' %}
+          <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200">
+            <i class="fa-solid fa-circle-xmark text-[11px]"></i> รายการถูกปฏิเสธ / สลิปไม่ผ่าน
+          </span>
+        {% else %}
+          <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
+            <i class="fa-solid fa-clock text-[11px]"></i> อยู่ระหว่างรอแอดมินตรวจสอบสลิป
+          </span>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Transaction Flow: From -> To Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4 bg-[#FAF8F5] rounded-2xl border border-[#E7E2D9]">
+      <!-- Sender Side -->
+      <div class="space-y-1">
+        <span class="text-[10px] font-bold text-stone-400 uppercase tracking-wider flex items-center gap-1">
+          <i class="fa-solid fa-paper-plane text-[9px] text-[#FF6B4A]"></i> โอนจาก (From)
+        </span>
+        <p class="font-bold text-xs text-stone-800">{{ user.username }}</p>
+        <p class="text-[11px] text-stone-500">{{ tx.payment_method }}</p>
+        <p class="text-[11px] font-mono text-stone-600 font-semibold">{{ tx.sender_phone }}</p>
+      </div>
+
+      <!-- Receiver Side -->
+      <div class="space-y-1 border-t sm:border-t-0 sm:border-l border-[#E7E2D9] pt-3 sm:pt-0 sm:pl-3">
+        <span class="text-[10px] font-bold text-stone-400 uppercase tracking-wider flex items-center gap-1">
+          <i class="fa-solid fa-wallet text-[9px] text-emerald-600"></i> เข้าสู่กระเป๋า (To)
+        </span>
+        <p class="font-bold text-xs text-stone-800">PrintVerse Studio Wallet</p>
+        <p class="text-[11px] text-stone-500">บัญชีผู้ใช้: {{ user.email }}</p>
+        <p class="text-[11px] font-mono text-emerald-700 font-semibold">ID: WALLET-{{ "%04d"|format(user.id) }}</p>
+      </div>
+    </div>
+
+    <!-- Transaction Attributes Breakdown with VAT 7% -->
+    <div class="space-y-2.5 text-xs border-t border-[#E7E2D9] pt-4">
+      <div class="flex items-center justify-between text-stone-500">
+        <span>ประเภทธุรกรรม</span>
+        <span class="font-bold text-stone-800">เติมเงินเข้ากระเป๋า (Wallet Top-up)</span>
+      </div>
+      <div class="flex items-center justify-between text-stone-500">
+        <span>ช่องทางการชำระเงิน</span>
+        <span class="font-semibold text-stone-800">{{ tx.payment_method }}</span>
+      </div>
+      <div class="flex items-center justify-between text-stone-500">
+        <span>วันและเวลาที่โอนจริง</span>
+        <span class="font-mono font-semibold text-stone-800">{{ tx.transfer_time }}</span>
+      </div>
+      <div class="flex items-center justify-between text-stone-500">
+        <span>ยอดเงินที่แจ้งโอน</span>
+        <span class="font-mono text-stone-800 font-semibold">฿{{ "%.2f"|format(tx.amount) }}</span>
+      </div>
+      <div class="flex items-center justify-between text-stone-500">
+        <span class="flex items-center gap-1">
+          <span>ค่าบริการระบบ</span>
+          <span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-100 text-emerald-700 font-bold">ฟรี 0%</span>
+        </span>
+        <span class="font-mono text-emerald-600 font-bold">฿0.00</span>
+      </div>
+      <div class="flex items-center justify-between text-stone-800 font-bold pt-2 border-t border-[#E7E2D9]">
+        <div>
+          <span class="text-sm">ยอดเงินสุทธิที่เข้ากระเป๋า</span>
+          <span class="block text-[10px] font-normal text-emerald-600">ฟรีค่าธรรมเนียม 0% (ยอดเงินเข้ากระเป๋าเต็มจำนวน 100%)</span>
+        </div>
+        <span class="font-mono text-emerald-600 text-base font-black">+฿{{ "%.2f"|format(tx.net_amount) }}</span>
+      </div>
+      <div class="flex items-center justify-between text-stone-500 pt-1">
+        <span>รหัสอ้างอิงธุรกรรม</span>
+        <span class="font-mono text-stone-700 font-semibold">PV-TOP-{{ "%04d"|format(tx.id) }}</span>
+      </div>
+    </div>
+    
+    <!-- Slip Footer: Trust & Security Seals -->
+    <div class="border-t border-[#E7E2D9] pt-4 flex items-center justify-between text-[10px] text-stone-400">
+      <div class="flex items-center gap-1.5">
+        <i class="fa-solid fa-shield-halved text-emerald-600"></i>
+        <span>Verified E-Receipt • PrintVerse 3D Official</span>
+      </div>
+      <div class="font-mono">
+        Scan & Verified 100%
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Original Slip Attachment for Verification (Excluded from printable slip / No-print so PDF is strictly 1 A4 page) -->
+  {% if tx.slip_image %}
+  <div class="bg-white border border-[#E7E2D9] rounded-3xl p-5 shadow-xs space-y-3 no-print">
+    <div class="flex items-center justify-between">
+      <span class="text-xs font-bold text-stone-600 flex items-center gap-1.5">
+        <i class="fa-solid fa-image text-stone-400"></i>
+        <span>ภาพสลิปต้นฉบับที่แนบส่ง (สำหรับตรวจสอบ ไม่รวมในใบเสร็จ)</span>
+      </span>
+      <a href="{{ url_for('static', filename='uploads/slips/' + tx.slip_image) }}" target="_blank"
+         class="text-[11px] font-semibold text-[#FF6B4A] hover:underline flex items-center gap-1">
+        <span>ดูภาพขนาดเต็ม</span>
+        <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i>
+      </a>
+    </div>
+    <div class="bg-[#FAF8F5] border border-[#E7E2D9] rounded-2xl p-2.5 flex items-center justify-center">
+      <a href="{{ url_for('static', filename='uploads/slips/' + tx.slip_image) }}" target="_blank">
+        <img src="{{ url_for('static', filename='uploads/slips/' + tx.slip_image) }}" 
+             alt="สลิปหลักฐาน" 
+             class="max-h-52 rounded-xl object-contain border border-[#E7E2D9] shadow-xs hover:opacity-95 transition">
+      </a>
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+
+<!-- Auto PDF download if query param download=1 -->
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('download') === '1') {
+      setTimeout(function() {
+        downloadSlipAsPDF('printable-slip', 'PrintVerse_Topup_PV-TOP-{{ "%04d"|format(tx.id) }}.pdf');
+      }, 500);
+    }
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="th" class="h-full min-h-screen bg-[#FAF8F5] text-[#1C1917]">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}PrintVerse 3D{% endblock %}</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Plus Jakarta Sans & Prompt -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <!-- html2pdf.js CDN for Client-side Slip PDF Generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  
+  <style>
+    @media print {
+      @page {
+        size: A4 portrait;
+        margin: 12mm;
+      }
+      body * {
+        visibility: hidden !important;
+      }
+      #printable-slip, #printable-slip * {
+        visibility: visible !important;
+      }
+      #printable-slip {
+        position: absolute !important;
+        left: 0 !important;
+        top: 0 !important;
+        width: 100% !important;
+        max-width: 650px !important;
+        margin: 0 auto !important;
+        padding: 20px !important;
+        box-shadow: none !important;
+        border: 1px solid #E7E2D9 !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+    }
+  </style>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'Prompt', 'sans-serif'],
+          },
+          colors: {
+            cream: {
+              50: '#FDFCF9',
+              100: '#FAF8F5',
+              200: '#F5F2EB',
+              300: '#EBE5DA',
+              400: '#DDD5C7',
+            },
+            coral: {
+              400: '#FF8366',
+              500: '#FF6B4A',
+              600: '#E85938',
+              700: '#CF4727',
+            },
+            charcoal: {
+              800: '#292524',
+              900: '#1C1917',
+            }
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="min-h-screen w-full flex flex-col bg-[#FAF8F5] text-[#1C1917] font-sans antialiased selection:bg-[#FF6B4A] selection:text-white m-0 p-0">
+
+  <!-- Thin Grid Line Header / Navbar -->
+  <nav class="w-full sticky top-0 z-50 backdrop-blur-md bg-[#FAF8F5]/90 border-b border-[#E7E2D9]">
+    <div class="w-full px-6 sm:px-10 lg:px-16">
+      <div class="flex items-center justify-between h-20">
+        
+        <!-- Brand Logo & Studio Name -->
+        <a href="{% if current_user.is_authenticated %}{{ url_for('index') }}{% else %}{{ url_for('login') }}{% endif %}" class="flex items-center space-x-3.5 group">
+          <div class="w-9 h-9 rounded-xl bg-white border border-[#E7E2D9] flex items-center justify-center text-[#1C1917] shadow-sm group-hover:border-[#FF6B4A] transition">
+            <i class="fa-solid fa-cube text-sm text-[#FF6B4A]"></i>
+          </div>
+          <div class="flex flex-col">
+            <span class="text-base font-bold tracking-tight text-[#1C1917]">PrintVerse<span class="text-[#FF6B4A]">.3D</span></span>
+            <span class="text-[10px] tracking-wider uppercase text-stone-500 font-medium">3D Model Marketplace</span>
+          </div>
+        </a>
+
+        <!-- Right Menu -->
+        <div class="flex items-center space-x-2 sm:space-x-4 text-sm">
+          <!-- Language Switcher Toggle TH / EN -->
+          <div class="flex items-center rounded-xl bg-white p-0.5 border border-[#E7E2D9] text-xs font-bold shadow-2xs mr-1">
+            <a href="{{ url_for('set_language', lang='th') }}" 
+               class="px-2 py-1 rounded-lg transition {% if current_lang == 'th' %}bg-[#FF6B4A] text-white shadow-xs{% else %}text-stone-500 hover:text-stone-900{% endif %}"
+               title="เปลี่ยนเป็นภาษาไทย">TH</a>
+            <a href="{{ url_for('set_language', lang='en') }}" 
+               class="px-2 py-1 rounded-lg transition {% if current_lang == 'en' %}bg-[#FF6B4A] text-white shadow-xs{% else %}text-stone-500 hover:text-stone-900{% endif %}"
+               title="Switch to English">EN</a>
+          </div>
+
+          {% if current_user.is_authenticated %}
+            <a href="{{ url_for('index') }}" class="text-stone-600 hover:text-[#1C1917] font-medium transition">
+              {{ t('nav_explore') }}
+            </a>
+
+            <!-- Favorites / Liked Models Link -->
+            <a href="{{ url_for('favorites') }}" class="relative text-stone-600 hover:text-rose-600 font-medium transition flex items-center gap-1.5 px-2 py-1" title="{{ t('nav_favorites') }}">
+              <i class="fa-solid fa-heart text-sm text-rose-500"></i>
+              <span class="hidden sm:inline">{{ t('nav_favorites') }}</span>
+              {% if liked_model_ids|length > 0 %}
+                <span class="inline-flex items-center justify-center w-4 h-4 rounded-full text-[10px] font-bold bg-rose-500 text-white">
+                  {{ liked_model_ids|length }}
+                </span>
+              {% endif %}
+            </a>
+
+            <!-- Cart Link with Badge -->
+            <a href="{{ url_for('cart') }}" class="relative text-stone-600 hover:text-[#1C1917] font-medium transition flex items-center gap-1.5 px-2 py-1" title="{{ t('nav_cart') }}">
+              <i class="fa-solid fa-cart-shopping text-sm text-[#FF6B4A]"></i>
+              <span class="hidden sm:inline">{{ t('nav_cart') }}</span>
+              {% if cart_count > 0 %}
+                <span class="inline-flex items-center justify-center w-4 h-4 rounded-full text-[10px] font-bold bg-[#FF6B4A] text-white">
+                  {{ cart_count }}
+                </span>
+              {% endif %}
+            </a>
+
+            <a href="{{ url_for('dashboard') }}" class="text-stone-600 hover:text-[#1C1917] font-medium transition px-1 py-1">
+              {{ t('nav_library') }}
+            </a>
+
+            <!-- Sell / Upload Model Link -->
+            <a href="{{ url_for('upload_model') }}" class="text-[#FF6B4A] hover:text-[#E85938] font-bold transition px-2 py-1 flex items-center gap-1.5 bg-[#FF6B4A]/10 rounded-xl text-xs">
+              <i class="fa-solid fa-cloud-arrow-up"></i>
+              <span>{{ t('nav_upload') }}</span>
+            </a>
+
+            <!-- User Profile Avatar & Name Link -->
+            <a href="{{ url_for('profile') }}" class="flex items-center gap-2 text-stone-700 hover:text-[#1C1917] font-medium transition px-1 py-1 group" title="{{ t('nav_profile') }}">
+              {% if current_user.avatar_url %}
+                <img src="{{ current_user.avatar_url }}" alt="{{ current_user.username }}" class="w-8 h-8 rounded-full object-cover border border-[#E7E2D9] group-hover:border-[#FF6B4A] transition shadow-2xs">
+              {% else %}
+                <div class="w-8 h-8 rounded-full bg-[#FF6B4A]/10 text-[#FF6B4A] font-bold text-xs flex items-center justify-center border border-[#E7E2D9] group-hover:border-[#FF6B4A] transition shadow-2xs">
+                  {{ current_user.username[:1].upper() }}
+                </div>
+              {% endif %}
+              <span class="hidden md:inline text-xs font-semibold">{{ current_user.username }}</span>
+            </a>
+
+            <!-- Wallet Indicator & Balance Dropdown (Hides Withdraw & History) -->
+            <div class="relative inline-block text-left" id="wallet-dropdown-container">
+              <button type="button" onclick="toggleWalletDropdown(event)" id="wallet-dropdown-btn" 
+                      class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-[#E7E2D9] hover:border-[#FF6B4A] text-xs font-semibold text-stone-800 shadow-xs hover:shadow-sm transition group"
+                      title="คลิกเพื่อดูเมนูกระเป๋าเงิน (เติมเงิน, ถอนเงิน, ประวัติการเงิน)">
+                <i class="fa-solid fa-wallet text-[#FF6B4A] text-xs"></i>
+                <span class="text-stone-400 font-normal hidden lg:inline">{{ t('nav_balance') }}:</span>
+                <span class="text-[#FF6B4A] font-bold">฿{{ "%.2f"|format(current_user.wallet_balance) }}</span>
+                <i class="fa-solid fa-chevron-down text-[9px] text-stone-400 group-hover:text-stone-700 transition ml-0.5"></i>
+              </button>
+
+              <!-- Wallet Dropdown Menu -->
+              <div id="wallet-dropdown" class="hidden absolute right-0 mt-2 w-64 bg-white border border-[#E7E2D9] rounded-2xl shadow-xl z-50 overflow-hidden divide-y divide-[#E7E2D9]/60">
+                <!-- Dropdown Header: Current Balance -->
+                <div class="p-3 bg-[#FAF8F5]">
+                  <div class="flex items-center justify-between text-stone-500 text-[11px] font-medium">
+                    <span>{{ t('nav_balance') }}</span>
+                    <span class="text-[10px] text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full font-bold">พร้อมใช้งาน</span>
+                  </div>
+                  <div class="text-xl font-extrabold text-[#1C1917] mt-0.5">
+                    ฿{{ "%.2f"|format(current_user.wallet_balance) }}
+                  </div>
+                </div>
+
+                <!-- Dropdown Actions: Topup, Withdraw (hidden from navbar), History (hidden from navbar) -->
+                <div class="p-1.5 space-y-0.5 text-xs">
+                  <!-- 1. Topup Link -->
+                  <a href="{{ url_for('topup') }}" class="flex items-center justify-between p-2.5 rounded-xl hover:bg-[#FAF8F5] transition group text-stone-700 hover:text-[#FF6B4A]">
+                    <div class="flex items-center gap-2.5">
+                      <div class="w-7 h-7 rounded-lg bg-[#FF6B4A]/10 text-[#FF6B4A] flex items-center justify-center text-xs group-hover:bg-[#FF6B4A] group-hover:text-white transition">
+                        <i class="fa-solid fa-plus"></i>
+                      </div>
+                      <div>
+                        <p class="font-bold text-stone-800 group-hover:text-[#FF6B4A]">{{ t('nav_topup') }}</p>
+                        <p class="text-[10px] text-stone-400">ฟรีค่าธรรมเนียม 0%</p>
+                      </div>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-[10px] text-stone-300 group-hover:text-[#FF6B4A]"></i>
+                  </a>
+
+                  <!-- 2. Withdraw Link (Hidden from header toolbar) -->
+                  <a href="{{ url_for('withdraw') }}" class="flex items-center justify-between p-2.5 rounded-xl hover:bg-[#FAF8F5] transition group text-stone-700 hover:text-emerald-600">
+                    <div class="flex items-center gap-2.5">
+                      <div class="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-600 flex items-center justify-center text-xs group-hover:bg-emerald-600 group-hover:text-white transition">
+                        <i class="fa-solid fa-hand-holding-dollar"></i>
+                      </div>
+                      <div>
+                        <p class="font-bold text-stone-800 group-hover:text-emerald-600">{{ t('nav_withdraw') }}</p>
+                        <p class="text-[10px] text-stone-400">โอนเข้าบัญชีธนาคาร (1%)</p>
+                      </div>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-[10px] text-stone-300 group-hover:text-emerald-600"></i>
+                  </a>
+
+                  <!-- 3. Transaction History Link (Hidden from header toolbar) -->
+                  <a href="{{ url_for('wallet_transactions') }}" class="flex items-center justify-between p-2.5 rounded-xl hover:bg-[#FAF8F5] transition group text-stone-700 hover:text-purple-600">
+                    <div class="flex items-center gap-2.5">
+                      <div class="w-7 h-7 rounded-lg bg-purple-500/10 text-purple-600 flex items-center justify-center text-xs group-hover:bg-purple-600 group-hover:text-white transition">
+                        <i class="fa-solid fa-receipt"></i>
+                      </div>
+                      <div>
+                        <p class="font-bold text-stone-800 group-hover:text-purple-600">{{ t('nav_history') }}</p>
+                        <p class="text-[10px] text-stone-400">ประวัติเติมเงิน ถอนเงิน และสลิป</p>
+                      </div>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-[10px] text-stone-300 group-hover:text-purple-600"></i>
+                  </a>
+                </div>
+              </div>
+            </div>
+            
+            <span class="text-stone-300">|</span>
+
+            <a href="{{ url_for('logout') }}" title="{{ t('nav_logout') }}" class="text-stone-500 hover:text-stone-900 text-xs transition flex items-center gap-1">
+              <i class="fa-solid fa-arrow-right-from-bracket"></i>
+              <span class="hidden sm:inline">{{ t('nav_logout') }}</span>
+            </a>
+
+            {% if current_user.is_authenticated and current_user.is_admin and current_user.email == 'official@printverse.com' %}
+              <!-- Admin Notification Bell & Dropdown -->
+              <div class="relative inline-block text-left" id="admin-notify-container">
+                <button type="button" onclick="toggleAdminNotifyDropdown()" id="admin-notify-btn"
+                        title="การแจ้งเตือนรายการรออนุมัติ"
+                        class="relative p-2 rounded-xl bg-white border border-[#E7E2D9] hover:border-[#FF6B4A] text-stone-700 hover:text-[#FF6B4A] transition shadow-xs flex items-center justify-center">
+                  <i class="fa-solid fa-bell text-sm"></i>
+                  <span id="admin-notify-badge"
+                        class="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-extrabold bg-[#FF6B4A] text-white flex items-center justify-center shadow-xs {% if total_pending_count == 0 %}hidden{% endif %}">
+                    {{ total_pending_count }}
+                  </span>
+                </button>
+
+                <!-- Dropdown Menu -->
+                <div id="admin-notify-dropdown" class="hidden absolute right-0 mt-2 w-80 bg-white border border-[#E7E2D9] rounded-2xl shadow-xl z-50 overflow-hidden divide-y divide-[#E7E2D9]/60">
+                  <div class="p-3 bg-[#FAF8F5] flex items-center justify-between">
+                    <span class="text-xs font-bold text-[#1C1917] flex items-center gap-1.5">
+                      <i class="fa-solid fa-bell text-[#FF6B4A]"></i> รายการรอแอดมินอนุมัติ
+                    </span>
+                    <span id="admin-notify-dropdown-total" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#FF6B4A]/10 text-[#FF6B4A]">
+                      {{ total_pending_count }} รายการ
+                    </span>
+                  </div>
+
+                  <div class="p-2 space-y-1 text-xs">
+                    <!-- Pending Models Item -->
+                    <a href="{{ url_for('admin_models') }}" class="flex items-center justify-between p-2.5 rounded-xl hover:bg-[#FAF8F5] transition group">
+                      <div class="flex items-center gap-2.5">
+                        <div class="w-8 h-8 rounded-lg bg-purple-500/10 text-purple-600 flex items-center justify-center text-xs">
+                          <i class="fa-solid fa-cube"></i>
+                        </div>
+                        <div>
+                          <p class="font-bold text-stone-800">โมเดล 3D รออนุมัติ</p>
+                          <p class="text-[10px] text-stone-400">ผู้ใช้โพสต์ขายสินค้าใหม่</p>
+                        </div>
+                      </div>
+                      <span id="admin-notify-models-count" class="px-2 py-0.5 rounded-full font-mono font-bold text-xs {% if pending_models_count > 0 %}bg-purple-100 text-purple-700 animate-pulse{% else %}bg-stone-100 text-stone-500{% endif %}">
+                        {{ pending_models_count }}
+                      </span>
+                    </a>
+
+                    <!-- Pending Topups Item -->
+                    <a href="{{ url_for('admin_topups') }}" class="flex items-center justify-between p-2.5 rounded-xl hover:bg-[#FAF8F5] transition group">
+                      <div class="flex items-center gap-2.5">
+                        <div class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-600 flex items-center justify-center text-xs">
+                          <i class="fa-solid fa-money-bill-transfer"></i>
+                        </div>
+                        <div>
+                          <p class="font-bold text-stone-800">สลิปเติมเงินรอตรวจ</p>
+                          <p class="text-[10px] text-stone-400">แจ้งโอนเงินเข้ากระเป๋า</p>
+                        </div>
+                      </div>
+                      <span id="admin-notify-topups-count" class="px-2 py-0.5 rounded-full font-mono font-bold text-xs {% if pending_topups_count > 0 %}bg-emerald-100 text-emerald-700 animate-pulse{% else %}bg-stone-100 text-stone-500{% endif %}">
+                        {{ pending_topups_count }}
+                      </span>
+                    </a>
+
+                    <!-- Pending Withdrawals Item -->
+                    <a href="{{ url_for('admin_withdrawals') }}" class="flex items-center justify-between p-2.5 rounded-xl hover:bg-[#FAF8F5] transition group">
+                      <div class="flex items-center gap-2.5">
+                        <div class="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-600 flex items-center justify-center text-xs">
+                          <i class="fa-solid fa-hand-holding-dollar"></i>
+                        </div>
+                        <div>
+                          <p class="font-bold text-stone-800">คำขอถอนเงินรอตรวจ</p>
+                          <p class="text-[10px] text-stone-400">ขอถอนเงินกลับบัญชีผู้ใช้</p>
+                        </div>
+                      </div>
+                      <span id="admin-notify-withdrawals-count" class="px-2 py-0.5 rounded-full font-mono font-bold text-xs {% if pending_withdrawals_count > 0 %}bg-amber-100 text-amber-700 animate-pulse{% else %}bg-stone-100 text-stone-500{% endif %}">
+                        {{ pending_withdrawals_count }}
+                      </span>
+                    </a>
+                  </div>
+
+                  <div class="p-2 bg-[#FAF8F5] text-center">
+                    <a href="{{ url_for('admin_dashboard') }}" class="text-[11px] font-bold text-[#FF6B4A] hover:underline block py-1">
+                      เปิดหน้า Admin Dashboard เต็มรูปแบบ →
+                    </a>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Admin Panel Button with indicator -->
+              <a href="{{ url_for('admin_dashboard') }}" class="ml-1 px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-[#1C1917] hover:bg-stone-700 transition flex items-center gap-1.5 shadow-sm relative">
+                <i class="fa-solid fa-shield-halved text-[#FF6B4A]"></i>
+                <span>Admin Panel</span>
+                <span id="admin-panel-indicator" class="w-2 h-2 rounded-full bg-[#FF6B4A] {% if total_pending_count > 0 %}animate-ping{% else %}hidden{% endif %}"></span>
+              </a>
+            {% endif %}
+          {% else %}
+            <a href="{{ url_for('login') }}" class="text-stone-700 hover:text-[#1C1917] font-medium px-3 py-2 transition">
+              {{ t('nav_login') }}
+            </a>
+            <a href="{{ url_for('register') }}" class="px-4 py-2 rounded-xl text-xs font-semibold text-white bg-[#FF6B4A] hover:bg-[#E85938] shadow-sm shadow-[#FF6B4A]/25 transition">
+              {{ t('nav_register') }}
+            </a>
+          {% endif %}
+        </div>
+
+      </div>
+    </div>
+  </nav>
+
+  <!-- Flash Notification Messages -->
+  <div class="w-full max-w-5xl mx-auto px-6 sm:px-10 pt-6">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="flex items-center justify-between p-4 mb-3 rounded-xl border text-sm font-medium shadow-sm transition
+            {% if category == 'success' %} bg-white border-emerald-300/80 text-emerald-800
+            {% elif category == 'danger' %} bg-white border-rose-300/80 text-rose-800
+            {% elif category == 'warning' %} bg-white border-amber-300/80 text-amber-800
+            {% else %} bg-white border-[#E7E2D9] text-stone-800 {% endif %}">
+            <div class="flex items-center space-x-3">
+              <span class="w-2 h-2 rounded-full 
+                {% if category == 'success' %} bg-emerald-500
+                {% elif category == 'danger' %} bg-rose-500
+                {% elif category == 'warning' %} bg-amber-500
+                {% else %} bg-[#FF6B4A] {% endif %}"></span>
+              <span>{{ message }}</span>
+            </div>
+            <button onclick="this.parentElement.remove()" class="text-xs text-stone-400 hover:text-stone-800"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+  </div>
+
+  <!-- Main Content Container (Spacious Layout) -->
+  <main class="w-full flex-1 flex flex-col">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Gallery Style Footer with Thin Divider -->
+  <footer class="w-full border-t border-[#E7E2D9] bg-[#FAF8F5] py-10 mt-20 text-xs text-stone-500">
+    <div class="w-full px-6 sm:px-10 lg:px-16 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div class="flex items-center space-x-2">
+        <span class="font-bold text-stone-800">PrintVerse 3D</span>
+        <span>— คลังโมเดลมาตรฐานสำหรับ 3D Printing ทุกประเภท</span>
+      </div>
+      <div class="flex items-center space-x-4 text-stone-400">
+        <span>.STL</span>
+        <span>•</span>
+        <span>.3MF</span>
+        <span>•</span>
+        <span>.STEP</span>
+        <span>•</span>
+        <span>© 2026</span>
+      </div>
+    </div>
+  </footer>
+
+  {% if current_user.is_authenticated and current_user.is_admin %}
+  <!-- Floating Toast Notification for Admin (Bottom-Right) -->
+  <div id="admin-toast-container" class="fixed bottom-6 right-6 z-50 flex flex-col gap-3 pointer-events-none"></div>
+
+  <script>
+    let lastPendingCount = {{ total_pending_count }};
+
+    function toggleAdminNotifyDropdown() {
+      const dropdown = document.getElementById('admin-notify-dropdown');
+      if (dropdown) {
+        dropdown.classList.toggle('hidden');
+      }
+    }
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+      const container = document.getElementById('admin-notify-container');
+      const dropdown = document.getElementById('admin-notify-dropdown');
+      if (container && dropdown && !container.contains(e.target)) {
+        dropdown.classList.add('hidden');
+      }
+    });
+
+    function showAdminToast(title, message, link) {
+      const container = document.getElementById('admin-toast-container');
+      if (!container) return;
+
+      const toast = document.createElement('div');
+      toast.className = 'pointer-events-auto bg-[#1C1917] text-white border border-[#FF6B4A]/50 rounded-2xl p-4 shadow-2xl flex items-start gap-3 max-w-sm transition-all duration-300 transform translate-y-4 opacity-0';
+      toast.innerHTML = `
+        <div class="w-8 h-8 rounded-xl bg-[#FF6B4A]/20 text-[#FF6B4A] flex items-center justify-center flex-shrink-0 mt-0.5">
+          <i class="fa-solid fa-bell text-sm"></i>
+        </div>
+        <div class="flex-1 min-w-0">
+          <h4 class="text-xs font-bold text-white">${title}</h4>
+          <p class="text-[11px] text-stone-300 mt-0.5">${message}</p>
+          <a href="${link}" class="inline-block mt-2 text-[10px] font-bold text-[#FF6B4A] hover:underline">คลิกไปตรวจสอบ →</a>
+        </div>
+        <button onclick="this.parentElement.remove()" class="text-stone-400 hover:text-white text-xs">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      `;
+
+      container.appendChild(toast);
+      requestAnimationFrame(() => {
+        toast.classList.remove('translate-y-4', 'opacity-0');
+      });
+
+      // Auto dismiss after 8 seconds
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-4');
+        setTimeout(() => toast.remove(), 300);
+      }, 8000);
+    }
+
+    // Real-time polling every 10 seconds for Admin
+    setInterval(() => {
+      fetch('/api/admin/pending-notifications')
+        .then(res => res.json())
+        .then(data => {
+          if (!data || data.error) return;
+
+          const badge = document.getElementById('admin-notify-badge');
+          const dropdownTotal = document.getElementById('admin-notify-dropdown-total');
+          const modelsCount = document.getElementById('admin-notify-models-count');
+          const topupsCount = document.getElementById('admin-notify-topups-count');
+          const withdrawalsCount = document.getElementById('admin-notify-withdrawals-count');
+          const indicator = document.getElementById('admin-panel-indicator');
+
+          if (badge) {
+            badge.innerText = data.total_pending_count;
+            if (data.total_pending_count > 0) {
+              badge.classList.remove('hidden');
+            } else {
+              badge.classList.add('hidden');
+            }
+          }
+
+          if (dropdownTotal) dropdownTotal.innerText = `${data.total_pending_count} รายการ`;
+          if (modelsCount) {
+            modelsCount.innerText = data.pending_models_count;
+            if (data.pending_models_count > 0) {
+              modelsCount.className = 'px-2 py-0.5 rounded-full font-mono font-bold text-xs bg-purple-100 text-purple-700 animate-pulse';
+            } else {
+              modelsCount.className = 'px-2 py-0.5 rounded-full font-mono font-bold text-xs bg-stone-100 text-stone-500';
+            }
+          }
+          if (topupsCount) {
+            topupsCount.innerText = data.pending_topups_count;
+            if (data.pending_topups_count > 0) {
+              topupsCount.className = 'px-2 py-0.5 rounded-full font-mono font-bold text-xs bg-emerald-100 text-emerald-700 animate-pulse';
+            } else {
+              topupsCount.className = 'px-2 py-0.5 rounded-full font-mono font-bold text-xs bg-stone-100 text-stone-500';
+            }
+          }
+          if (withdrawalsCount) {
+            withdrawalsCount.innerText = data.pending_withdrawals_count;
+            if (data.pending_withdrawals_count > 0) {
+              withdrawalsCount.className = 'px-2 py-0.5 rounded-full font-mono font-bold text-xs bg-amber-100 text-amber-700 animate-pulse';
+            } else {
+              withdrawalsCount.className = 'px-2 py-0.5 rounded-full font-mono font-bold text-xs bg-stone-100 text-stone-500';
+            }
+          }
+          if (indicator) {
+            if (data.total_pending_count > 0) {
+              indicator.classList.remove('hidden');
+            } else {
+              indicator.classList.add('hidden');
+            }
+          }
+
+          // If count increased, alert admin!
+          if (data.total_pending_count > lastPendingCount) {
+            if (data.pending_withdrawals_count > 0 && data.pending_withdrawals && data.pending_withdrawals[0]) {
+              showAdminToast('🔔 มีคำขอถอนเงินใหม่!', `ผู้ใช้ '${data.pending_withdrawals[0].username}' ขอถอนเงิน ฿${data.pending_withdrawals[0].amount.toFixed(2)} เข้า ${data.pending_withdrawals[0].bank_name}`, '{{ url_for("admin_withdrawals") }}');
+            } else if (data.pending_topups_count > 0 && data.pending_topups && data.pending_topups[0]) {
+              showAdminToast('🔔 มีรายการแจ้งเติมเงินใหม่!', `ผู้ใช้ '${data.pending_topups[0].username}' โอนเงิน ฿${data.pending_topups[0].amount.toFixed(2)} รอตรวจสอบสลิป`, '{{ url_for("admin_topups") }}');
+            } else if (data.pending_models_count > 0 && data.pending_models && data.pending_models[0]) {
+              showAdminToast('🔔 มีโมเดล 3D ใหม่รออนุมัติ!', `โมเดล '${data.pending_models[0].title}' โดยคุณ ${data.pending_models[0].author}`, '{{ url_for("admin_models") }}');
+            }
+          }
+          lastPendingCount = data.total_pending_count;
+        })
+        .catch(() => {});
+    }, 10000);
+  </script>
+  {% endif %}
+
+  <!-- Global Password Visibility Toggle Helper -->
+  <script>
+    function togglePasswordVisibility(inputId, btn) {
+      const input = document.getElementById(inputId);
+      if (!input) return;
+      const icon = btn.querySelector('i');
+      if (input.type === 'password') {
+        input.type = 'text';
+        if (icon) {
+          icon.classList.remove('fa-eye');
+          icon.classList.add('fa-eye-slash');
+        }
+        btn.setAttribute('title', 'คลิกเพื่อซ่อนรหัสผ่าน');
+      } else {
+        input.type = 'password';
+        if (icon) {
+          icon.classList.remove('fa-eye-slash');
+          icon.classList.add('fa-eye');
+        }
+        btn.setAttribute('title', 'คลิกเพื่อดูรหัสผ่าน');
+      }
+    }
+
+    // Global Wallet Dropdown Toggle & Outside-click Handling
+    function toggleWalletDropdown(event) {
+      if (event) {
+        event.stopPropagation();
+      }
+      const dropdown = document.getElementById('wallet-dropdown');
+      if (dropdown) {
+        dropdown.classList.toggle('hidden');
+      }
+      // Close admin notification dropdown if open
+      const adminDropdown = document.getElementById('admin-notify-dropdown');
+      if (adminDropdown) {
+        adminDropdown.classList.add('hidden');
+      }
+    }
+
+    document.addEventListener('click', function(e) {
+      const walletContainer = document.getElementById('wallet-dropdown-container');
+      const walletDropdown = document.getElementById('wallet-dropdown');
+      if (walletContainer && walletDropdown && !walletContainer.contains(e.target)) {
+        walletDropdown.classList.add('hidden');
+      }
+    });
+
+    // Global Slip PDF Download & Print Helper
+    function downloadSlipAsPDF(elementId, filename) {
+      const element = document.getElementById(elementId);
+      if (!element) {
+        alert('ไม่พบเอกสารสลีปสำหรับดาวน์โหลด');
+        return;
+      }
+
+      // Configure PDF Options (Standard A4 portrait format, high-dpi canvas, strictly single page)
+      const opt = {
+        margin: [12, 12, 12, 12],
+        filename: filename || 'PrintVerse_Transaction_Slip.pdf',
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, logging: false },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        pagebreak: { mode: 'avoid-all' }
+      };
+
+      if (typeof html2pdf !== 'undefined') {
+        html2pdf().set(opt).from(element).save();
+      } else {
+        window.print();
+      }
+    }
+  </script>
+</body>
+</html>

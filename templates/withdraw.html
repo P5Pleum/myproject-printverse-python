@@ -1,0 +1,380 @@
+{% extends "base.html" %}
+{% block title %}ถอนเงินเข้าบัญชี | PrintVerse 3D{% endblock %}
+
+{% block content %}
+<div class="w-full flex-1 max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 space-y-6">
+
+  <!-- Navigation Tabs & Balance Header -->
+  <div class="w-full bg-white border border-[#E7E2D9] rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+    <div class="space-y-3">
+      <!-- Tab Switcher between Top-up, Withdraw, and Transactions -->
+      <div class="inline-flex items-center p-1 bg-[#FAF8F5] border border-[#E7E2D9] rounded-2xl text-xs font-bold">
+        <a href="{{ url_for('topup') }}" class="px-4 py-2 rounded-xl text-stone-500 hover:text-[#1C1917] transition flex items-center gap-1.5">
+          <i class="fa-solid fa-arrow-down text-emerald-600"></i>
+          <span>เติมเงินเข้ากระเป๋า</span>
+        </a>
+        <a href="{{ url_for('withdraw') }}" class="px-4 py-2 rounded-xl bg-white text-[#FF6B4A] shadow-xs flex items-center gap-1.5 border border-[#E7E2D9]/60">
+          <i class="fa-solid fa-arrow-up text-[#FF6B4A]"></i>
+          <span>ถอนเงินกลับบัญชี</span>
+        </a>
+        <a href="{{ url_for('wallet_transactions') }}" class="px-4 py-2 rounded-xl text-stone-500 hover:text-[#1C1917] transition flex items-center gap-1.5">
+          <i class="fa-solid fa-receipt text-purple-600"></i>
+          <span>ประวัติโอนเข้า-ออก</span>
+        </a>
+      </div>
+
+      <div>
+        <h1 class="text-2xl sm:text-3xl font-extrabold text-[#1C1917] tracking-tight">ถอนเงินเข้าบัญชี (Wallet Withdrawal)</h1>
+        <p class="text-xs text-stone-500 mt-1">ถอนรายได้จากการขายโมเดล หรือยอดเงินคงเหลือในกระเป๋า กลับเข้าบัญชีธนาคารหรือพร้อมเพย์ของคุณ</p>
+      </div>
+    </div>
+
+    <!-- Balance Box -->
+    <div class="bg-[#FAF8F5] border border-[#E7E2D9] rounded-2xl p-4 sm:px-6 text-right flex-shrink-0 flex sm:flex-col items-center sm:items-end justify-between sm:justify-center">
+      <span class="text-[11px] uppercase tracking-wider text-stone-400 font-semibold block">ยอดเงินที่ถอนได้</span>
+      <span class="text-2xl sm:text-3xl font-black text-[#FF6B4A]" id="current-balance-val">฿{{ "%.2f"|format(user.wallet_balance) }}</span>
+    </div>
+  </div>
+
+  <!-- Main Grid: Info Guidelines & Withdrawal Form -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+
+    <!-- Left Column: Guidelines & Supported Channels (5 cols) -->
+    <div class="lg:col-span-5 space-y-6">
+
+      <!-- Guidelines Card -->
+      <div class="bg-white border border-[#E7E2D9] rounded-3xl p-6 shadow-sm space-y-4">
+        <h2 class="text-base font-bold text-[#1C1917] flex items-center gap-2">
+          <i class="fa-solid fa-circle-info text-[#FF6B4A]"></i>
+          <span>เงื่อนไขการถอนเงิน</span>
+        </h2>
+        <ul class="text-xs text-stone-600 space-y-3 leading-relaxed">
+          <li class="flex items-start gap-2.5">
+            <i class="fa-solid fa-check text-emerald-500 mt-0.5"></i>
+            <span>ถอนเงินขั้นต่ำ <strong>฿1.00</strong> สูงสุดไม่เกินยอดเงินคงเหลือในกระเป๋า</span>
+          </li>
+          <li class="flex items-start gap-2.5">
+            <i class="fa-solid fa-percent text-[#FF6B4A] mt-0.5"></i>
+            <span><strong>คิดค่าบริการระบบ 1%</strong> (ระบบจะหัก 1% อัตโนมัติ และโอนยอดเงินสุทธิเข้าบัญชีของคุณ)</span>
+          </li>
+          <li class="flex items-start gap-2.5">
+            <i class="fa-solid fa-check text-emerald-500 mt-0.5"></i>
+            <span>ระบบจะหักยอดเงินออกจากกระเป๋าทันทีเพื่อความปลอดภัย หากไม่อนุมัติจะคืนเงินกลับกระเป๋าอัตโนมัติ</span>
+          </li>
+          <li class="flex items-start gap-2.5">
+            <i class="fa-solid fa-clock text-amber-500 mt-0.5"></i>
+            <span>แอดมินจะตรวจสอบและโอนเงินเข้าบัญชีของคุณภายใน <strong>24 ชั่วโมง</strong></span>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Supported Banks & PromptPay Card -->
+      <div class="bg-[#FAF8F5] border border-[#E7E2D9] rounded-3xl p-6 space-y-3">
+        <span class="text-[11px] font-bold text-stone-400 uppercase tracking-wider block">ช่องทางที่รองรับการโอน</span>
+        <div class="flex flex-wrap gap-2 text-xs">
+          <span class="px-3 py-1 rounded-xl bg-white border border-[#E7E2D9] font-medium text-stone-700 flex items-center gap-1.5 shadow-2xs">
+            <i class="fa-solid fa-qrcode text-purple-600 text-[11px]"></i> พร้อมเพย์ (PromptPay)
+          </span>
+          <span class="px-2.5 py-1 rounded-xl bg-white border border-[#E7E2D9] font-medium text-stone-700 shadow-2xs">กสิกรไทย (KBANK)</span>
+          <span class="px-2.5 py-1 rounded-xl bg-white border border-[#E7E2D9] font-medium text-stone-700 shadow-2xs">ไทยพาณิชย์ (SCB)</span>
+          <span class="px-2.5 py-1 rounded-xl bg-white border border-[#E7E2D9] font-medium text-stone-700 shadow-2xs">กรุงไทย (KTB)</span>
+          <span class="px-2.5 py-1 rounded-xl bg-white border border-[#E7E2D9] font-medium text-stone-700 shadow-2xs">กรุงเทพ (BBL)</span>
+          <span class="px-2.5 py-1 rounded-xl bg-white border border-[#E7E2D9] font-medium text-stone-700 shadow-2xs">ทีทีบี (ttb)</span>
+          <span class="px-2.5 py-1 rounded-xl bg-white border border-[#E7E2D9] font-medium text-stone-700 shadow-2xs">กรุงศรี (BAY)</span>
+          <span class="px-2.5 py-1 rounded-xl bg-white border border-[#E7E2D9] font-medium text-stone-700 shadow-2xs">ออมสิน (GSB)</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Right Column: Withdrawal Form (7 cols) -->
+    <div class="lg:col-span-7">
+      <div class="bg-white border border-[#E7E2D9] rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
+        <div class="border-b border-[#E7E2D9] pb-4">
+          <h2 class="text-base font-bold text-[#1C1917]">ระบุข้อมูลการถอนเงิน</h2>
+          <p class="text-xs text-stone-500">กรอกจำนวนเงินและข้อมูลบัญชีธนาคารหรือพร้อมเพย์ที่คุณต้องการให้โอนเงินเข้า</p>
+        </div>
+
+        <form action="{{ url_for('withdraw') }}" method="POST" class="space-y-5" onsubmit="return validateWithdrawForm()">
+
+          <!-- Amount to withdraw -->
+          <div class="space-y-2">
+            <label class="block text-xs font-bold text-stone-700 uppercase tracking-wider">
+              จำนวนเงินที่ต้องการถอน (บาท) <span class="text-[#FF6B4A]">*</span>
+            </label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-stone-400 font-bold text-sm">฿</span>
+              <input type="number" step="0.01" min="1" max="{{ user.wallet_balance }}" id="withdraw-amount-input" name="amount" required
+                     placeholder="0.00" oninput="calculateWithdrawFee(this.value)"
+                     class="w-full pl-9 pr-4 py-3 rounded-2xl border border-[#E7E2D9] bg-[#FAF8F5] focus:bg-white focus:border-[#FF6B4A] focus:ring-2 focus:ring-[#FF6B4A]/20 outline-none transition font-mono font-bold text-base text-[#1C1917]">
+            </div>
+
+            <!-- Quick Amount Selector Buttons -->
+            <div class="flex items-center gap-2 pt-1 flex-wrap text-xs">
+              <span class="text-[10px] text-stone-400 font-semibold uppercase">เลือกยอดด่วน:</span>
+              <button type="button" onclick="setWithdrawAmount(50)" class="px-2.5 py-1 rounded-lg bg-[#FAF8F5] hover:bg-stone-200 border border-[#E7E2D9] font-mono font-semibold text-stone-700 transition">฿50</button>
+              <button type="button" onclick="setWithdrawAmount(100)" class="px-2.5 py-1 rounded-lg bg-[#FAF8F5] hover:bg-stone-200 border border-[#E7E2D9] font-mono font-semibold text-stone-700 transition">฿100</button>
+              <button type="button" onclick="setWithdrawAmount(300)" class="px-2.5 py-1 rounded-lg bg-[#FAF8F5] hover:bg-stone-200 border border-[#E7E2D9] font-mono font-semibold text-stone-700 transition">฿300</button>
+              <button type="button" onclick="setWithdrawAmount(500)" class="px-2.5 py-1 rounded-lg bg-[#FAF8F5] hover:bg-stone-200 border border-[#E7E2D9] font-mono font-semibold text-stone-700 transition">฿500</button>
+              <button type="button" onclick="setWithdrawAmount({{ user.wallet_balance }})" class="px-2.5 py-1 rounded-lg bg-[#FF6B4A]/10 hover:bg-[#FF6B4A]/20 border border-[#FF6B4A]/30 font-semibold text-[#FF6B4A] transition">ถอนทั้งหมด</button>
+            </div>
+
+            <!-- Real-Time Withdrawal Fee (1%) & Net Payout Preview Box -->
+            <div id="withdraw-fee-card" class="mt-3 p-3.5 rounded-2xl bg-[#FAF8F5] border border-[#E7E2D9] space-y-2 text-xs">
+              <div class="flex items-center justify-between pb-1.5 border-b border-[#E7E2D9]/70 text-[11px] font-bold text-stone-700">
+                <span class="flex items-center gap-1.5">
+                  <i class="fa-solid fa-calculator text-[#FF6B4A]"></i>
+                  <span>สรุปยอดเงินและค่าบริการระบบ (1%)</span>
+                </span>
+                <span class="text-[10px] text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200 font-semibold">
+                  หักค่าบริการ 1%
+                </span>
+              </div>
+              <div class="grid grid-cols-3 gap-2 text-[11px]">
+                <div class="bg-white p-2.5 rounded-xl border border-[#E7E2D9]">
+                  <span class="text-stone-400 block text-[10px]">ยอดที่ขอถอน</span>
+                  <span class="font-bold font-mono text-stone-800 text-xs" id="withdraw-gross-val">฿0.00</span>
+                </div>
+                <div class="bg-white p-2.5 rounded-xl border border-[#E7E2D9]">
+                  <span class="text-stone-400 block text-[10px]">หักค่าบริการ 1%</span>
+                  <span class="font-bold font-mono text-amber-600 text-xs" id="withdraw-fee-val">฿0.00</span>
+                </div>
+                <div class="bg-white p-2.5 rounded-xl border border-[#E7E2D9]">
+                  <span class="text-stone-400 block text-[10px]">ยอดโอนเข้าบัญชีจริง</span>
+                  <span class="font-black font-mono text-[#FF6B4A] text-xs" id="withdraw-net-val">฿0.00</span>
+                </div>
+              </div>
+              <p class="text-[10px] text-stone-500 leading-normal" id="withdraw-hint-text">
+                * ระบบคิดค่าบริการ 1% สำหรับการถอนเงิน โดยจะหักยอดเงินและโอนยอดเงินสุทธิที่หัก 1% แล้วเข้าบัญชีของคุณ (VAT คิดเฉพาะตอนซื้อโมเดล)
+              </p>
+            </div>
+          </div>
+
+          <!-- Bank / Channel Selection -->
+          <div class="space-y-2">
+            <label class="block text-xs font-bold text-stone-700 uppercase tracking-wider">
+              ธนาคาร หรือ ช่องทางรับเงิน <span class="text-[#FF6B4A]">*</span>
+            </label>
+            <select name="bank_name" id="withdraw-bank-select" required
+                    class="w-full px-4 py-3 rounded-2xl border border-[#E7E2D9] bg-[#FAF8F5] focus:bg-white focus:border-[#FF6B4A] focus:ring-2 focus:ring-[#FF6B4A]/20 outline-none transition text-xs font-semibold text-stone-800">
+              <option value="">-- เลือกธนาคาร หรือ พร้อมเพย์ --</option>
+              <option value="พร้อมเพย์ (PromptPay)">พร้อมเพย์ (PromptPay)</option>
+              <option value="ธนาคารกสิกรไทย (KBANK)">ธนาคารกสิกรไทย (KBANK)</option>
+              <option value="ธนาคารไทยพาณิชย์ (SCB)">ธนาคารไทยพาณิชย์ (SCB)</option>
+              <option value="ธนาคารกรุงไทย (KTB)">ธนาคารกรุงไทย (KTB)</option>
+              <option value="ธนาคารกรุงเทพ (BBL)">ธนาคารกรุงเทพ (BBL)</option>
+              <option value="ธนาคารทีเอ็มบีธนชาต (ttb)">ธนาคารทีเอ็มบีธนชาต (ttb)</option>
+              <option value="ธนาคารกรุงศรีอยุธยา (BAY)">ธนาคารกรุงศรีอยุธยา (BAY)</option>
+              <option value="ธนาคารเกียรตินาคินภัทร (KKP)">ธนาคารเกียรตินาคินภัทร (KKP)</option>
+              <option value="ธนาคารออมสิน (GSB)">ธนาคารออมสิน (GSB)</option>
+            </select>
+          </div>
+
+          <!-- Account Number or PromptPay ID -->
+          <div class="space-y-2">
+            <label class="block text-xs font-bold text-stone-700 uppercase tracking-wider">
+              เลขที่บัญชีธนาคาร หรือ เบอร์พร้อมเพย์ <span class="text-[#FF6B4A]">*</span>
+            </label>
+            <input type="text" name="account_number" id="withdraw-account-number" required
+                   placeholder="เช่น 095XXXXXXX หรือ 123-4-56789-0"
+                   class="w-full px-4 py-3 rounded-2xl border border-[#E7E2D9] bg-[#FAF8F5] focus:bg-white focus:border-[#FF6B4A] focus:ring-2 focus:ring-[#FF6B4A]/20 outline-none transition text-xs font-mono font-semibold text-stone-800">
+          </div>
+
+          <!-- Account Owner Name -->
+          <div class="space-y-2">
+            <label class="block text-xs font-bold text-stone-700 uppercase tracking-wider">
+              ชื่อ-นามสกุล เจ้าของบัญชี <span class="text-[#FF6B4A]">*</span>
+            </label>
+            <input type="text" name="account_name" id="withdraw-account-name" required
+                   placeholder="ระบุชื่อและนามสกุลให้ตรงกับหน้าสมุดบัญชี"
+                   value="{{ user.username }}"
+                   class="w-full px-4 py-3 rounded-2xl border border-[#E7E2D9] bg-[#FAF8F5] focus:bg-white focus:border-[#FF6B4A] focus:ring-2 focus:ring-[#FF6B4A]/20 outline-none transition text-xs font-semibold text-stone-800">
+            <p class="text-[10px] text-stone-400">* เพื่อความถูกต้องในการโอนเงิน ชื่อบัญชีต้องตรงกับบัญชีจริงของผู้รับ</p>
+          </div>
+
+          <!-- Submit Button -->
+          <div class="pt-2">
+            {% if user.wallet_balance > 0 %}
+              <button type="submit" 
+                      class="w-full py-4 px-6 rounded-2xl text-xs sm:text-sm font-bold text-white bg-[#FF6B4A] hover:bg-[#E85938] shadow-md shadow-[#FF6B4A]/25 transition flex items-center justify-center gap-2 group">
+                <i class="fa-solid fa-paper-plane group-hover:translate-x-0.5 transition-transform"></i>
+                <span>ยืนยันการขอถอนเงิน</span>
+              </button>
+            {% else %}
+              <button type="button" disabled
+                      class="w-full py-4 px-6 rounded-2xl text-xs sm:text-sm font-bold text-stone-400 bg-stone-100 border border-[#E7E2D9] cursor-not-allowed flex items-center justify-center gap-2">
+                <i class="fa-solid fa-ban"></i>
+                <span>ยอดเงินในกระเป๋าไม่เพียงพอสำหรับการถอน</span>
+              </button>
+            {% endif %}
+          </div>
+
+        </form>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Withdrawal History Section -->
+  <div id="withdraw-history" class="bg-white border border-[#E7E2D9] rounded-3xl p-6 sm:p-8 shadow-sm space-y-4">
+    <div class="flex items-center justify-between border-b border-[#E7E2D9] pb-4">
+      <div>
+        <h2 class="text-base font-bold text-[#1C1917] flex items-center gap-2">
+          <i class="fa-solid fa-receipt text-[#FF6B4A]"></i>
+          <span>ประวัติคำขอถอนเงิน & ใบเสร็จสลีป (Withdrawal Receipts)</span>
+        </h2>
+        <p class="text-xs text-stone-500 mt-0.5">ติดตามสถานะการโอนเงินคืนจากแอดมิน และเปิดดู/ดาวน์โหลดสลีปใบเสร็จ PDF</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <a href="{{ url_for('topup') }}#topup-history" class="text-xs font-semibold text-emerald-600 hover:underline flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#FAF8F5] border border-[#E7E2D9] hover:border-emerald-500 transition">
+          <span>ดูประวัติการเติมเงิน</span>
+          <i class="fa-solid fa-arrow-right text-[10px]"></i>
+        </a>
+        <span class="px-3 py-1 rounded-full text-xs font-bold bg-[#FAF8F5] border border-[#E7E2D9] text-stone-600">
+          {{ withdrawals|length }} รายการ
+        </span>
+      </div>
+    </div>
+
+    {% if withdrawals %}
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs">
+          <thead>
+            <tr class="border-b border-[#E7E2D9] text-[11px] font-bold text-stone-400 uppercase tracking-wider">
+              <th class="py-3 px-3">รหัสคำขอ</th>
+              <th class="py-3 px-3">วันเวลาที่ขอถอน</th>
+              <th class="py-3 px-3">ช่องทาง/ธนาคาร</th>
+              <th class="py-3 px-3">เลขที่บัญชี</th>
+              <th class="py-3 px-3">ชื่อบัญชี</th>
+              <th class="py-3 px-3">ยอดขอถอน</th>
+              <th class="py-3 px-3">ค่าบริการ (1%)</th>
+              <th class="py-3 px-3">ยอดโอนสุทธิ</th>
+              <th class="py-3 px-3">สถานะ</th>
+              <th class="py-3 px-3">หมายเหตุแอดมิน</th>
+              <th class="py-3 px-3 text-right">สลีป / ใบเสร็จ</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-[#E7E2D9]">
+            {% for w in withdrawals %}
+            <tr class="hover:bg-[#FAF8F5] transition">
+              <td class="py-3.5 px-3 font-mono font-bold text-stone-700">#WD-{{ "%04d"|format(w.id) }}</td>
+              <td class="py-3.5 px-3 text-stone-500 font-mono">{{ w.created_at.strftime('%d/%m/%Y %H:%M') if w.created_at else '—' }}</td>
+              <td class="py-3.5 px-3 font-semibold text-stone-800">{{ w.bank_name }}</td>
+              <td class="py-3.5 px-3 font-mono font-bold text-stone-700">{{ w.account_number }}</td>
+              <td class="py-3.5 px-3 text-stone-700">{{ w.account_name }}</td>
+              <td class="py-3.5 px-3 font-mono text-stone-700 font-semibold">฿{{ "%.2f"|format(w.amount) }}</td>
+              <td class="py-3.5 px-3 font-mono text-amber-600 font-semibold">-฿{{ "%.2f"|format(w.fee) }}</td>
+              <td class="py-3.5 px-3 font-mono font-black text-[#FF6B4A] text-sm">฿{{ "%.2f"|format(w.net_amount) }}</td>
+              <td class="py-3.5 px-3">
+                {% if w.status == 'สำเร็จ' %}
+                  <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    <i class="fa-solid fa-circle-check text-[9px]"></i> โอนสำเร็จแล้ว
+                  </span>
+                {% elif w.status == 'ปฏิเสธ' %}
+                  <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200" title="ยอดเงินถูกคืนกลับเข้ากระเป๋าแล้ว">
+                    <i class="fa-solid fa-circle-xmark text-[9px]"></i> ปฏิเสธ (คืนเงินแล้ว)
+                  </span>
+                {% else %}
+                  <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                    <i class="fa-solid fa-clock text-[9px] animate-pulse"></i> รอแอดมินดำเนินการ
+                  </span>
+                {% endif %}
+              </td>
+              <td class="py-3.5 px-3 text-stone-500 text-[11px] max-w-[160px] truncate" title="{{ w.admin_note or '—' }}">
+                {{ w.admin_note or '—' }}
+              </td>
+              <td class="py-3.5 px-3 text-right">
+                {% if w.status == 'สำเร็จ' or current_user.is_admin %}
+                  <div class="inline-flex items-center gap-1.5">
+                    <a href="{{ url_for('slip_withdraw', tx_id=w.id) }}"
+                       class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-[#FAF8F5] border border-[#E7E2D9] text-stone-700 hover:border-[#FF6B4A] hover:text-[#FF6B4A] transition"
+                       title="เปิดดูใบสลีป">
+                      <i class="fa-solid fa-receipt text-[10px]"></i>
+                      <span>ดูสลีป</span>
+                    </a>
+                    <a href="{{ url_for('slip_withdraw', tx_id=w.id) }}?download=1"
+                       class="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-bold bg-[#FF6B4A]/10 border border-[#FF6B4A]/30 text-[#FF6B4A] hover:bg-[#FF6B4A]/20 transition"
+                       title="ดาวน์โหลดสลีปเป็น PDF">
+                      <i class="fa-solid fa-file-pdf text-[10px]"></i>
+                      <span>โหลด PDF</span>
+                    </a>
+                  </div>
+                {% elif w.status == 'ปฏิเสธ' %}
+                  <span class="text-[11px] text-stone-400 font-medium italic">ไม่มีสลีป (ปฏิเสธ)</span>
+                {% else %}
+                  <span class="inline-flex items-center gap-1 text-[11px] text-amber-700 font-semibold bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200" title="ต้องรอให้แอดมินยืนยันและโอนเงินก่อน จึงจะมีสลีป">
+                    <i class="fa-solid fa-clock text-[10px]"></i>
+                    <span>รอแอดมินยืนยัน (ยังไม่มีสลีป)</span>
+                  </span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="py-12 text-center text-stone-400 space-y-2">
+        <i class="fa-solid fa-money-bill-transfer text-3xl text-stone-300"></i>
+        <p class="text-xs font-semibold">ยังไม่มีประวัติการขอถอนเงิน</p>
+      </div>
+    {% endif %}
+  </div>
+
+</div>
+
+<script>
+  function calculateWithdrawFee(val) {
+    var amt = parseFloat(val) || 0;
+    if (amt < 0) amt = 0;
+    var fee = Math.round(amt * 0.01 * 100) / 100;
+    var net = Math.round((amt - fee) * 100) / 100;
+
+    var grossEl = document.getElementById('withdraw-gross-val');
+    var feeEl = document.getElementById('withdraw-fee-val');
+    var netEl = document.getElementById('withdraw-net-val');
+
+    if (grossEl) grossEl.innerText = '฿' + amt.toLocaleString('th-TH', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    if (feeEl) feeEl.innerText = '-฿' + fee.toLocaleString('th-TH', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    if (netEl) netEl.innerText = '฿' + net.toLocaleString('th-TH', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+  }
+
+  function setWithdrawAmount(amt) {
+    var maxVal = {{ user.wallet_balance }};
+    if (amt > maxVal) amt = maxVal;
+    var inputEl = document.getElementById('withdraw-amount-input');
+    inputEl.value = amt.toFixed(2);
+    calculateWithdrawFee(inputEl.value);
+  }
+
+  function validateWithdrawForm() {
+    var amt = parseFloat(document.getElementById('withdraw-amount-input').value);
+    var maxVal = {{ user.wallet_balance }};
+    if (isNaN(amt) || amt <= 0) {
+      alert('กรุณาระบุจำนวนเงินที่ต้องการถอนให้ถูกต้อง');
+      return false;
+    }
+    if (amt > maxVal) {
+      alert('จำนวนเงินเกินยอดคงเหลือในกระเป๋าของคุณ (ยอดที่มี: ฿' + maxVal.toFixed(2) + ')');
+      return false;
+    }
+    var bank = document.getElementById('withdraw-bank-select').value;
+    var acc = document.getElementById('withdraw-account-number').value.trim();
+    var name = document.getElementById('withdraw-account-name').value.trim();
+    if (!bank || !acc || !name) {
+      alert('กรุณากรอกข้อมูลบัญชีรับเงินให้ครบถ้วน');
+      return false;
+    }
+    var fee = Math.round(amt * 0.01 * 100) / 100;
+    var net = Math.round((amt - fee) * 100) / 100;
+    return confirm('ยืนยันส่งคำขอถอนเงิน:\n• ยอดขอถอน: ฿' + amt.toFixed(2) + '\n• ค่าบริการระบบ (1%): ฿' + fee.toFixed(2) + '\n• ยอดเงินสุทธิที่จะโอนเข้าบัญชี: ฿' + net.toFixed(2) + '\n\nเข้าบัญชี: ' + bank + ' (' + acc + ' - ' + name + ')?\n\n*ยอดเงินจะถูกหักออกจากกระเป๋าทันทีในระหว่างรอแอดมินโอนเงิน');
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    var inputEl = document.getElementById('withdraw-amount-input');
+    if (inputEl && inputEl.value) {
+      calculateWithdrawFee(inputEl.value);
+    }
+  });
+</script>
+{% endblock %}

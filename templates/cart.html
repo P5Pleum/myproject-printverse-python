@@ -1,0 +1,257 @@
+{% extends "base.html" %}
+{% block title %}ตะกร้าสินค้า | PrintVerse 3D{% endblock %}
+
+{% block content %}
+<div class="w-full flex-1 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 py-12 sm:py-16 space-y-10">
+
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#E7E2D9] pb-6">
+    <div>
+      <h1 class="text-2xl sm:text-3xl font-extrabold text-[#1C1917] tracking-tight">ตะกร้าสินค้า</h1>
+      <p class="text-xs text-stone-500 mt-1">รายการไฟล์โมเดล 3D ที่คุณเลือกไว้ ({{ cart_models|length }} รายการ)</p>
+    </div>
+    <a href="{{ url_for('index') }}" class="text-xs font-semibold text-[#FF6B4A] hover:underline transition">
+      + เลือกดูโมเดลในตลาดเพิ่ม
+    </a>
+  </div>
+
+  {% if cart_models %}
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      
+      <!-- Cart Items List (8 cols) -->
+      <div class="lg:col-span-8 space-y-4">
+        {% for model in cart_models %}
+          <div class="bg-white border border-[#E7E2D9] rounded-2xl p-5 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 shadow-xs hover:border-stone-400 transition">
+            
+            <div class="flex items-center space-x-4">
+              <!-- Thumbnail -->
+              <a href="{{ url_for('model_detail', model_id=model.id) }}" class="w-16 h-16 rounded-xl bg-[#FAF8F5] border border-[#E7E2D9] overflow-hidden flex items-center justify-center text-stone-500 flex-shrink-0 p-1 group">
+                {% if model.thumbnail_url %}
+                  <img src="{{ model.thumbnail_url }}" alt="{{ model.title }}" class="w-full h-full object-contain group-hover:scale-105 transition">
+                {% else %}
+                  <i class="fa-solid fa-cube text-xl text-[#FF6B4A]"></i>
+                {% endif %}
+              </a>
+
+              <!-- Details -->
+              <div>
+                <div class="flex items-center space-x-2">
+                  <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-[#FAF8F5] text-stone-700 border border-[#E7E2D9]">
+                    .{{ model.primary_format }}
+                  </span>
+                  <span class="text-xs text-stone-400 font-mono">{{ model.file_size_mb }} MB</span>
+                </div>
+                <h3 class="font-bold text-[#1C1917] text-base mt-1 hover:text-[#FF6B4A] transition">
+                  <a href="{{ url_for('model_detail', model_id=model.id) }}">
+                    {{ model.title }}
+                  </a>
+                </h3>
+                <p class="text-xs text-stone-500 line-clamp-1">{{ model.category }}</p>
+              </div>
+            </div>
+
+            <!-- Price & Actions -->
+            <div class="w-full sm:w-auto flex items-center justify-between sm:justify-end sm:space-x-6 pt-3 sm:pt-0 border-t sm:border-t-0 border-[#E7E2D9]">
+              <div class="text-left sm:text-right">
+                <span class="text-sm font-extrabold text-[#1C1917]">
+                  {% if model.is_free or model.price == 0 %}
+                    <span class="text-emerald-600">ฟรี</span>
+                  {% else %}
+                    ฿{{ "%.2f"|format(model.price) }}
+                  {% endif %}
+                </span>
+              </div>
+
+              <form method="POST" action="{{ url_for('cart_remove', model_id=model.id) }}">
+                <button type="submit" title="ลบออกจากตะกร้า" class="p-2 rounded-lg text-stone-400 hover:text-rose-600 hover:bg-rose-50 transition text-sm">
+                  <i class="fa-solid fa-trash-can"></i>
+                </button>
+              </form>
+            </div>
+
+          </div>
+        {% endfor %}
+      </div>
+
+      <!-- Order Summary Card (4 cols) -->
+      <div class="lg:col-span-4 bg-white border border-[#E7E2D9] rounded-3xl p-6 sm:p-8 space-y-6 shadow-sm sticky top-28">
+        <h2 class="text-lg font-bold text-[#1C1917] tracking-tight border-b border-[#E7E2D9] pb-4">สรุปคำสั่งซื้อ</h2>
+
+        <div class="space-y-3 text-xs">
+          <div class="flex justify-between text-stone-600">
+            <span>จำนวนสินค้า</span>
+            <span class="font-semibold text-stone-900">{{ cart_models|length }} ไฟล์</span>
+          </div>
+
+          <div class="flex justify-between text-stone-600">
+            <span>ยอดเงินในกระเป๋าของคุณ</span>
+            <span class="font-bold text-stone-900">฿{{ "%.2f"|format(current_user.wallet_balance) }}</span>
+          </div>
+
+          <div class="flex justify-between text-stone-600 pt-1 border-t border-dashed border-[#E7E2D9]">
+            <span>{{ t('model_price_base') }}</span>
+            <span class="font-mono text-stone-700 font-semibold">฿{{ "%.2f"|format(subtotal) }}</span>
+          </div>
+
+          <div class="flex justify-between text-stone-600">
+            <span class="flex items-center gap-1">
+              <span>{{ t('vat_amount') }}</span>
+              <span class="text-[9px] px-1 py-0.2 rounded bg-purple-100 text-purple-700 font-bold">7%</span>
+            </span>
+            <span class="font-mono text-purple-700 font-semibold">฿{{ "%.2f"|format(vat_amount) }}</span>
+          </div>
+
+          <div class="pt-3 border-t border-[#E7E2D9] flex justify-between items-baseline">
+            <div>
+              <span class="text-sm font-bold text-[#1C1917] block">{{ t('total_payment') }}</span>
+              <span class="text-[10px] text-purple-700 font-semibold">{{ t('vat_included') }}</span>
+            </div>
+            <span class="text-2xl font-black text-[#FF6B4A]">฿{{ "%.2f"|format(total_price) }}</span>
+          </div>
+        </div>
+
+        <!-- Checkout Action Button -->
+        <div class="pt-2">
+          {% if current_user.wallet_balance >= total_price %}
+            <button type="button" onclick="openCartConfirmModal()" 
+                    class="w-full py-3.5 px-4 rounded-xl font-bold text-sm text-white bg-[#FF6B4A] hover:bg-[#E85938] shadow-md shadow-[#FF6B4A]/25 transition flex items-center justify-center space-x-2">
+              <i class="fa-solid fa-bag-shopping text-xs"></i>
+              <span>ชำระเงินทั้งหมดและรับไฟล์</span>
+            </button>
+          {% else %}
+            <button type="button" disabled 
+                    class="w-full py-3.5 px-4 rounded-xl font-bold text-sm text-stone-400 bg-stone-200 cursor-not-allowed flex items-center justify-center space-x-2">
+              <i class="fa-solid fa-lock text-xs"></i>
+              <span>ยอดเงินไม่เพียงพอ</span>
+            </button>
+          {% endif %}
+        </div>
+
+        {% if current_user.wallet_balance < total_price %}
+          <div class="text-[11px] text-amber-700 bg-amber-50 border border-amber-200/80 rounded-xl p-3 flex items-start space-x-2">
+            <i class="fa-solid fa-circle-exclamation text-amber-500 mt-0.5"></i>
+            <div>
+              <span>ยอดเงินคงเหลือไม่พอสำหรับรายการนี้ (ขาดอีก ฿{{ "%.2f"|format(total_price - current_user.wallet_balance) }})</span>
+              <a href="{{ url_for('topup') }}" class="block font-bold text-[#FF6B4A] hover:underline mt-0.5">+ เติมเงินเข้ากระเป๋าเดี๋ยวนี้</a>
+            </div>
+          </div>
+        {% endif %}
+
+        <div class="text-[11px] text-stone-400 text-center">
+          <i class="fa-solid fa-shield-check text-stone-500 mr-1"></i>
+          <span>ไฟล์โมเดลจะถูกบันทึกลงในคลังทันทีหลังยืนยัน</span>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Cart Checkout Confirmation Modal -->
+    <div id="cart-confirm-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 hidden" onclick="closeCartConfirmModal()">
+      <div class="bg-white border border-[#E7E2D9] rounded-3xl max-w-lg w-full p-6 sm:p-7 space-y-5 shadow-2xl relative" onclick="event.stopPropagation()">
+        
+        <!-- Close [X] Button -->
+        <button type="button" onclick="closeCartConfirmModal()" class="absolute top-5 right-5 w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-500 hover:text-stone-800 flex items-center justify-center transition" title="ปิดหน้าต่าง [X]">
+          <i class="fa-solid fa-xmark text-sm"></i>
+        </button>
+
+        <!-- Modal Title -->
+        <div class="space-y-1 pr-8">
+          <div class="flex items-center gap-2">
+            <div class="w-7 h-7 rounded-lg bg-[#FF6B4A]/10 text-[#FF6B4A] flex items-center justify-center text-xs">
+              <i class="fa-solid fa-bag-shopping"></i>
+            </div>
+            <h3 class="text-base font-extrabold text-[#1C1917]">ยืนยันการชำระเงินจากตะกร้า</h3>
+          </div>
+          <p class="text-xs text-stone-500">กรุณาตรวจสอบสรุปคำสั่งซื้อก่อนตัดยอดเงินในกระเป๋า</p>
+        </div>
+
+        <!-- Summary Breakdown -->
+        <div class="space-y-2 p-4 rounded-2xl bg-[#FAF8F5] border border-[#E7E2D9] text-xs">
+          <div class="flex items-center justify-between text-stone-600">
+            <span>จำนวนรายการโมเดล</span>
+            <span class="font-bold text-stone-800">{{ cart_models|length }} ไฟล์</span>
+          </div>
+          <div class="flex items-center justify-between text-stone-600">
+            <span>{{ t('model_price_base') }}</span>
+            <span class="font-mono text-stone-700 font-semibold">฿{{ "%.2f"|format(subtotal) }}</span>
+          </div>
+          <div class="flex items-center justify-between text-stone-600">
+            <span class="flex items-center gap-1">
+              <span>{{ t('vat_amount') }}</span>
+              <span class="text-[9px] px-1 py-0.2 rounded bg-purple-100 text-purple-700 font-bold">7%</span>
+            </span>
+            <span class="font-mono text-purple-700 font-semibold">฿{{ "%.2f"|format(vat_amount) }}</span>
+          </div>
+          <div class="flex items-center justify-between font-bold pt-2 border-t border-[#E7E2D9] text-sm text-[#1C1917]">
+            <div>
+              <span>{{ t('total_payment') }}</span>
+              <span class="block text-[10px] font-normal text-purple-700">{{ t('vat_included') }}</span>
+            </div>
+            <span class="font-mono text-[#FF6B4A] text-base font-black">฿{{ "%.2f"|format(total_price) }}</span>
+          </div>
+        </div>
+
+        <!-- Wallet status -->
+        <div class="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 space-y-1">
+          <div class="flex items-center justify-between font-medium">
+            <span>ยอดเงินในกระเป๋าของคุณ:</span>
+            <span class="font-mono font-bold">฿{{ "%.2f"|format(current_user.wallet_balance) }}</span>
+          </div>
+          <div class="flex items-center justify-between text-emerald-700 font-bold">
+            <span>ยอดคงเหลือหลังสั่งซื้อ:</span>
+            <span class="font-mono">฿{{ "%.2f"|format(current_user.wallet_balance - total_price) }}</span>
+          </div>
+        </div>
+
+        <!-- Confirmation Buttons -->
+        <div class="flex items-center justify-end gap-3 pt-2 border-t border-[#E7E2D9]">
+          <button type="button" onclick="closeCartConfirmModal()"
+                  class="px-5 py-2.5 rounded-xl text-xs font-bold text-stone-600 bg-[#FAF8F5] border border-[#E7E2D9] hover:bg-stone-200 transition">
+            ยกเลิก
+          </button>
+          <form method="POST" action="{{ url_for('cart_checkout') }}" class="inline">
+            <button type="submit"
+                    class="px-6 py-2.5 rounded-xl text-xs font-bold text-white bg-[#FF6B4A] hover:bg-[#E85938] shadow-md shadow-[#FF6B4A]/25 transition flex items-center gap-2">
+              <i class="fa-solid fa-check"></i>
+              <span>ยืนยันการสั่งซื้อ</span>
+            </button>
+          </form>
+        </div>
+
+      </div>
+    </div>
+
+    <script>
+      function openCartConfirmModal() {
+        const modal = document.getElementById('cart-confirm-modal');
+        if (modal) modal.classList.remove('hidden');
+      }
+      function closeCartConfirmModal() {
+        const modal = document.getElementById('cart-confirm-modal');
+        if (modal) modal.classList.add('hidden');
+      }
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closeCartConfirmModal();
+      });
+    </script>
+  {% else %}
+    <!-- Empty Cart State -->
+    <div class="text-center py-28 bg-white border border-[#E7E2D9] rounded-3xl p-8 space-y-4 shadow-sm">
+      <div class="w-16 h-16 mx-auto rounded-2xl bg-[#F5F2EB] border border-[#E7E2D9] flex items-center justify-center text-stone-400">
+        <i class="fa-solid fa-cart-shopping text-2xl text-stone-400"></i>
+      </div>
+      <h2 class="text-lg font-bold text-[#1C1917]">ไม่มีสินค้าในตะกร้า</h2>
+      <p class="text-xs text-stone-500 max-w-sm mx-auto">
+        คุณสามารถเลือกดูโมเดลที่ต้องการ แล้วกด "เพิ่มลงตะกร้า" หรือ "ซื้อทันที" ได้ที่หน้าตลาดโมเดล
+      </p>
+      <div class="pt-2">
+        <a href="{{ url_for('index') }}" class="inline-flex items-center px-5 py-2.5 rounded-xl bg-[#FF6B4A] hover:bg-[#E85938] text-white text-xs font-bold shadow-sm shadow-[#FF6B4A]/25 transition">
+          ไปยังตลาดโมเดล 3D
+        </a>
+      </div>
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}

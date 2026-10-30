@@ -1,0 +1,252 @@
+{% extends "base.html" %}
+{% block title %}ประวัติธุรกรรมโอนเข้า-โอนออก | PrintVerse 3D{% endblock %}
+
+{% block content %}
+<div class="w-full flex-1 max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 space-y-6">
+
+  <!-- Top Navigation & Current Balance Card -->
+  <div class="w-full bg-white border border-[#E7E2D9] rounded-3xl p-5 sm:p-7 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+    <div class="space-y-3">
+      <!-- Tab Switcher between Top-up, Withdraw, and Transactions -->
+      <div class="inline-flex items-center p-1 bg-[#FAF8F5] border border-[#E7E2D9] rounded-2xl text-xs font-bold">
+        <a href="{{ url_for('topup') }}" class="px-4 py-2 rounded-xl text-stone-500 hover:text-[#1C1917] transition flex items-center gap-1.5">
+          <i class="fa-solid fa-arrow-down text-emerald-600"></i>
+          <span>เติมเงินเข้ากระเป๋า</span>
+        </a>
+        <a href="{{ url_for('withdraw') }}" class="px-4 py-2 rounded-xl text-stone-500 hover:text-[#1C1917] transition flex items-center gap-1.5">
+          <i class="fa-solid fa-arrow-up text-[#FF6B4A]"></i>
+          <span>ถอนเงินกลับบัญชี</span>
+        </a>
+        <a href="{{ url_for('wallet_transactions') }}" class="px-4 py-2 rounded-xl bg-white text-purple-700 shadow-xs flex items-center gap-1.5 border border-[#E7E2D9]/60">
+          <i class="fa-solid fa-receipt text-purple-600"></i>
+          <span>ประวัติโอนเข้า-ออก</span>
+        </a>
+      </div>
+
+      <div>
+        <h1 class="text-2xl sm:text-3xl font-extrabold text-[#1C1917] tracking-tight">ประวัติธุรกรรม (โอนเข้า / โอนออก)</h1>
+        <p class="text-xs text-stone-500 mt-1">บันทึกความเคลื่อนไหวของกระเป๋าเงินทั้งหมด ทั้งเงินเข้าและเงินออก พร้อมตรวจสอบสลีปและดาวน์โหลด PDF ได้ทันที</p>
+      </div>
+    </div>
+
+    <!-- Balance Box -->
+    <div class="bg-[#FAF8F5] border border-[#E7E2D9] rounded-2xl p-4 sm:px-6 text-right flex-shrink-0 flex sm:flex-col items-center sm:items-end justify-between sm:justify-center">
+      <span class="text-[11px] uppercase tracking-wider text-stone-400 font-semibold block">ยอดเงินในกระเป๋า</span>
+      <span class="text-2xl sm:text-3xl font-black text-[#FF6B4A]">฿{{ "%.2f"|format(user.wallet_balance) }}</span>
+    </div>
+  </div>
+
+  <!-- Financial Summary Cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+    <!-- Current Balance Card -->
+    <div class="bg-white border border-[#E7E2D9] rounded-2xl p-5 shadow-xs space-y-1">
+      <div class="flex items-center justify-between text-stone-400 text-xs">
+        <span>ยอดเงินคงเหลือ</span>
+        <i class="fa-solid fa-wallet text-stone-400"></i>
+      </div>
+      <p class="text-2xl font-black text-[#1C1917] font-mono">฿{{ "%.2f"|format(user.wallet_balance) }}</p>
+      <p class="text-[10px] text-stone-400">พร้อมใช้งานในการซื้อโมเดลหรือถอนเงิน</p>
+    </div>
+
+    <!-- Total Inflow Card -->
+    <div class="bg-white border border-emerald-200/80 rounded-2xl p-5 shadow-xs space-y-1 bg-gradient-to-br from-emerald-500/5 to-transparent">
+      <div class="flex items-center justify-between text-emerald-700 text-xs font-semibold">
+        <span>รวมยอดโอนเข้า (Inflow)</span>
+        <i class="fa-solid fa-arrow-down text-emerald-600"></i>
+      </div>
+      <p class="text-2xl font-black text-emerald-600 font-mono">+฿{{ "%.2f"|format(total_in) }}</p>
+      <p class="text-[10px] text-emerald-600/80">เติมเงินสำเร็จและรายได้จากการขายโมเดล</p>
+    </div>
+
+    <!-- Total Outflow Card -->
+    <div class="bg-white border border-amber-200/80 rounded-2xl p-5 shadow-xs space-y-1 bg-gradient-to-br from-amber-500/5 to-transparent">
+      <div class="flex items-center justify-between text-amber-700 text-xs font-semibold">
+        <span>รวมยอดโอนออก (Outflow)</span>
+        <i class="fa-solid fa-arrow-up text-[#FF6B4A]"></i>
+      </div>
+      <p class="text-2xl font-black text-[#FF6B4A] font-mono">-฿{{ "%.2f"|format(total_out) }}</p>
+      <p class="text-[10px] text-stone-400">ยอดถอนเงินและยอดการซื้อโมเดล</p>
+    </div>
+  </div>
+
+  <!-- Transactions Table Section -->
+  <div class="w-full bg-white border border-[#E7E2D9] rounded-3xl p-5 sm:p-7 shadow-sm space-y-6">
+    
+    <!-- Table Header & Filter Buttons -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#E7E2D9] pb-4">
+      <div>
+        <h2 class="text-lg font-bold text-[#1C1917]">รายการความเคลื่อนไหวทั้งหมด</h2>
+        <p class="text-xs text-stone-500">พบ {{ transactions|length }} รายการธุรกรรมในบัญชีของคุณ</p>
+      </div>
+
+      <!-- Filter Buttons -->
+      <div class="flex items-center gap-1.5 p-1 bg-[#FAF8F5] border border-[#E7E2D9] rounded-xl text-xs font-semibold">
+        <button type="button" onclick="filterTransactions('all')" id="filter-all" class="px-3 py-1.5 rounded-lg bg-white text-[#1C1917] shadow-xs transition">
+          ทั้งหมด
+        </button>
+        <button type="button" onclick="filterTransactions('in')" id="filter-in" class="px-3 py-1.5 rounded-lg text-stone-500 hover:text-emerald-700 transition flex items-center gap-1">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+          <span>โอนเข้า (+In)</span>
+        </button>
+        <button type="button" onclick="filterTransactions('out')" id="filter-out" class="px-3 py-1.5 rounded-lg text-stone-500 hover:text-[#FF6B4A] transition flex items-center gap-1">
+          <span class="w-1.5 h-1.5 rounded-full bg-[#FF6B4A]"></span>
+          <span>โอนออก (-Out)</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Table -->
+    {% if transactions %}
+      <div class="overflow-x-auto w-full">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-[#E7E2D9] text-[11px] text-stone-400 font-semibold uppercase tracking-wider">
+              <th class="text-left py-3.5 px-3.5 whitespace-nowrap">วันเวลา</th>
+              <th class="text-left py-3.5 px-3.5 whitespace-nowrap">ประเภทธุรกรรม</th>
+              <th class="text-left py-3.5 px-3.5">รายละเอียด</th>
+              <th class="text-left py-3.5 px-3.5 whitespace-nowrap">รหัสอ้างอิง</th>
+              <th class="text-right py-3.5 px-3.5 whitespace-nowrap">จำนวนเงิน</th>
+              <th class="text-center py-3.5 px-3.5 whitespace-nowrap">สถานะ</th>
+              <th class="text-right py-3.5 px-3.5 whitespace-nowrap">สลีป / เอกสาร</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-[#E7E2D9]">
+            {% for item in transactions %}
+            <tr class="hover:bg-[#FAF8F5] transition text-xs tx-row" data-direction="{{ item.direction }}">
+              
+              <!-- Date/Time -->
+              <td class="py-3.5 px-3.5 text-stone-500 font-mono whitespace-nowrap">
+                {{ item.created_at.strftime('%d/%m/%Y %H:%M') if item.created_at else '—' }}
+              </td>
+
+              <!-- Transaction Type Badge -->
+              <td class="py-3.5 px-3.5 whitespace-nowrap">
+                {% if item.direction == 'in' %}
+                  <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    <i class="fa-solid fa-arrow-down text-[9px]"></i> โอนเข้า ({{ item.title }})
+                  </span>
+                {% else %}
+                  <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                    <i class="fa-solid fa-arrow-up text-[9px]"></i> โอนออก ({{ item.title }})
+                  </span>
+                {% endif %}
+              </td>
+
+              <!-- Description -->
+              <td class="py-3.5 px-3.5 font-medium text-stone-700 max-w-[260px] xl:max-w-sm truncate" title="{{ item.description }}">
+                {{ item.description }}
+              </td>
+
+              <!-- Reference ID -->
+              <td class="py-3.5 px-3.5 font-mono font-bold text-stone-600 whitespace-nowrap">
+                <span class="px-2 py-0.5 rounded-md bg-[#FAF8F5] border border-[#E7E2D9]/70 text-[11px]">{{ item.ref_id }}</span>
+              </td>
+
+              <!-- Amount -->
+              <td class="py-3.5 px-3.5 text-right font-mono whitespace-nowrap">
+                {% if item.direction == 'in' %}
+                  <span class="text-emerald-600 font-black text-sm">+฿{{ "%.2f"|format(item.amount) }}</span>
+                  {% if item.type == 'topup' %}
+                    <span class="block text-[10px] font-normal text-emerald-600">เข้าเต็ม 100% (ฟรีค่าบริการ 0%)</span>
+                  {% endif %}
+                {% else %}
+                  <span class="text-[#FF6B4A] font-black text-sm">-฿{{ "%.2f"|format(item.amount) }}</span>
+                  {% if item.type == 'withdraw' %}
+                    <span class="block text-[10px] font-normal text-[#FF6B4A]">โอนสุทธิ ฿{{ "%.2f"|format(item.obj.net_amount) }} (หัก 1%)</span>
+                  {% endif %}
+                {% endif %}
+              </td>
+
+              <!-- Status -->
+              <td class="py-3.5 px-3.5 text-center whitespace-nowrap">
+                {% if item.status == 'สำเร็จ' %}
+                  <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    <i class="fa-solid fa-circle-check text-[9px]"></i> สำเร็จ
+                  </span>
+                {% elif item.status == 'ปฏิเสธ' %}
+                  <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                    <i class="fa-solid fa-circle-xmark text-[9px]"></i> ปฏิเสธ
+                  </span>
+                {% else %}
+                  <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200 animate-pulse">
+                    <i class="fa-solid fa-clock text-[9px]"></i> รอตรวจสอบ
+                  </span>
+                {% endif %}
+              </td>
+
+              <!-- Slip Actions -->
+              <td class="py-3.5 px-3.5 text-right whitespace-nowrap">
+                {% if item.slip_url %}
+                  <div class="inline-flex items-center gap-1.5 justify-end">
+                    <!-- View Slip Button -->
+                    <a href="{{ item.slip_url }}" 
+                       class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold bg-[#FAF8F5] border border-[#E7E2D9] text-stone-700 hover:border-[#FF6B4A] hover:text-[#FF6B4A] hover:bg-white transition shadow-2xs"
+                       title="เปิดดูใบสลีป">
+                      <i class="fa-solid fa-receipt text-[10px]"></i>
+                      <span>ดูสลีป</span>
+                    </a>
+
+                    <!-- Direct PDF Download Link -->
+                    <a href="{{ item.slip_url }}?download=1" 
+                       class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold bg-emerald-50 border border-emerald-200 text-emerald-700 hover:bg-emerald-100 transition shadow-2xs"
+                       title="ดาวน์โหลดสลีปเป็น PDF">
+                      <i class="fa-solid fa-file-pdf text-[10px]"></i>
+                      <span>โหลด PDF</span>
+                    </a>
+                  </div>
+                {% else %}
+                  <span class="text-stone-300 text-xs">—</span>
+                {% endif %}
+              </td>
+
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="py-16 text-center text-stone-400 space-y-3">
+        <div class="w-14 h-14 mx-auto rounded-2xl bg-[#FAF8F5] border border-[#E7E2D9] flex items-center justify-center text-stone-300 text-2xl">
+          <i class="fa-solid fa-receipt"></i>
+        </div>
+        <div>
+          <p class="text-sm font-bold text-stone-700">ยังไม่มีประวัติธุรกรรมในระบบ</p>
+          <p class="text-xs text-stone-400 mt-0.5">เมื่อมีการเติมเงิน, ถอนเงิน หรือซื้อขายโมเดล บันทึกจะแสดงที่นี่พร้อมสลีปและเอกสาร</p>
+        </div>
+      </div>
+    {% endif %}
+
+  </div>
+
+</div>
+
+<!-- Filter Javascript -->
+<script>
+  function filterTransactions(dir) {
+    const rows = document.querySelectorAll('.tx-row');
+    const btnAll = document.getElementById('filter-all');
+    const btnIn = document.getElementById('filter-in');
+    const btnOut = document.getElementById('filter-out');
+
+    // Reset button states
+    [btnAll, btnIn, btnOut].forEach(btn => {
+      btn.className = 'px-3 py-1.5 rounded-lg text-stone-500 hover:text-[#1C1917] transition flex items-center gap-1';
+    });
+
+    if (dir === 'all') {
+      btnAll.className = 'px-3 py-1.5 rounded-lg bg-white text-[#1C1917] shadow-xs transition';
+      rows.forEach(r => r.style.display = '');
+    } else if (dir === 'in') {
+      btnIn.className = 'px-3 py-1.5 rounded-lg bg-white text-emerald-700 font-bold shadow-xs transition flex items-center gap-1';
+      rows.forEach(r => {
+        r.style.display = (r.getAttribute('data-direction') === 'in') ? '' : 'none';
+      });
+    } else if (dir === 'out') {
+      btnOut.className = 'px-3 py-1.5 rounded-lg bg-white text-[#FF6B4A] font-bold shadow-xs transition flex items-center gap-1';
+      rows.forEach(r => {
+        r.style.display = (r.getAttribute('data-direction') === 'out') ? '' : 'none';
+      });
+    }
+  }
+</script>
+{% endblock %}

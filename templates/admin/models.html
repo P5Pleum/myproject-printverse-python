@@ -1,0 +1,141 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}จัดการโมเดล 3D{% endblock %}
+{% block page_title %}จัดการโมเดล 3D (3D Models Moderation){% endblock %}
+{% block page_subtitle %}รายการโมเดลทั้งหมดในระบบ — ตรวจสอบและลบโมเดลที่ไม่เหมาะสม{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+  <div class="bg-[#161412] rounded-2xl border border-white/5 overflow-hidden">
+    <div class="px-6 py-4 border-b border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div>
+        <h2 class="text-base font-bold text-white">ตารางโมเดล 3D ทั้งหมด (Models Moderation)</h2>
+        <p class="text-xs text-white/40">ตรวจสอบความถูกต้อง อนุมัติสินค้าใหม่ และลบสินค้าออกจากระบบฐานข้อมูล (.db)</p>
+      </div>
+      <div class="flex items-center gap-2">
+        <a href="{{ url_for('upload_model') }}" class="px-3.5 py-1.5 rounded-lg text-xs font-bold text-white bg-[#FF6B4A] hover:bg-[#E85938] transition flex items-center gap-1.5 shadow-sm">
+          <i class="fa-solid fa-plus text-[10px]"></i>
+          <span>+ เพิ่มสินค้าใหม่</span>
+        </a>
+        <span class="px-3 py-1.5 rounded-full text-xs font-semibold bg-white/5 text-white/60 border border-white/10">
+          {{ models|length }} รายการ
+        </span>
+      </div>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-white/5 bg-white/[0.01]">
+            <th class="text-left px-5 py-3.5 text-[11px] uppercase tracking-wider text-white/40 font-semibold">ID</th>
+            <th class="text-left px-5 py-3.5 text-[11px] uppercase tracking-wider text-white/40 font-semibold">โมเดล 3D</th>
+            <th class="text-left px-5 py-3.5 text-[11px] uppercase tracking-wider text-white/40 font-semibold">หมวดหมู่</th>
+            <th class="text-left px-5 py-3.5 text-[11px] uppercase tracking-wider text-white/40 font-semibold">ผู้ออกแบบ</th>
+            <th class="text-left px-5 py-3.5 text-[11px] uppercase tracking-wider text-white/40 font-semibold">รูปแบบไฟล์</th>
+            <th class="text-left px-5 py-3.5 text-[11px] uppercase tracking-wider text-white/40 font-semibold">ราคา</th>
+            <th class="text-left px-5 py-3.5 text-[11px] uppercase tracking-wider text-white/40 font-semibold">สถานะ</th>
+            <th class="text-left px-5 py-3.5 text-[11px] uppercase tracking-wider text-white/40 font-semibold">วันที่สร้าง</th>
+            <th class="text-right px-5 py-3.5 text-[11px] uppercase tracking-wider text-white/40 font-semibold">การจัดการ</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-white/5">
+          {% for m in models %}
+          <tr class="hover:bg-white/[0.02] transition">
+            <td class="px-5 py-3.5 font-mono text-xs text-white/40">#{{ m.id }}</td>
+            <td class="px-5 py-3.5">
+              <div class="flex items-center gap-3">
+                <a href="{{ url_for('model_detail', model_id=m.id) }}" target="_blank" title="ดูรายละเอียดสินค้า"
+                   class="w-10 h-10 rounded-xl bg-white/5 border border-white/10 overflow-hidden flex items-center justify-center text-[#FF6B4A] flex-shrink-0 hover:border-[#FF6B4A]/50 transition group">
+                  {% if m.thumbnail_url %}
+                    <img src="{{ m.thumbnail_url }}" alt="{{ m.title }}" class="w-full h-full object-contain p-0.5 group-hover:scale-105 transition-transform">
+                  {% else %}
+                    <i class="fa-solid fa-cube text-sm"></i>
+                  {% endif %}
+                </a>
+                <div class="max-w-[220px]">
+                  <a href="{{ url_for('model_detail', model_id=m.id) }}" target="_blank"
+                     class="text-white hover:text-[#FF6B4A] font-semibold text-xs truncate block transition" title="{{ m.title }}">
+                    {{ m.title }}
+                  </a>
+                  <p class="text-[10px] text-white/40 truncate">{{ m.description or '—' }}</p>
+                </div>
+              </div>
+            </td>
+            <td class="px-5 py-3.5">
+              <span class="px-2 py-0.5 rounded-full text-[10px] bg-white/5 text-white/70 border border-white/10">
+                {{ m.category }}
+              </span>
+            </td>
+            <td class="px-5 py-3.5 text-xs text-white/70">{{ m.author.username if m.author else 'PrintVerse' }}</td>
+            <td class="px-5 py-3.5 text-xs font-mono text-white/60">.{{ m.primary_format }} ({{ m.file_size_mb }} MB)</td>
+            <td class="px-5 py-3.5">
+              {% if m.is_free or m.price == 0 %}
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-green-500/10 text-green-400 border border-green-500/20">ฟรี</span>
+              {% else %}
+                <span class="font-mono font-bold text-xs text-[#FF6B4A]">฿{{ "%.2f"|format(m.price) }}</span>
+              {% endif %}
+            </td>
+            <td class="px-5 py-3.5">
+              {% if m.is_approved or m.status == 'อนุมัติแล้ว' %}
+                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/25">
+                  <i class="fa-solid fa-circle-check text-[9px]"></i> อนุมัติแล้ว
+                </span>
+              {% elif m.status == 'ปฏิเสธ' %}
+                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/15 text-rose-400 border border-rose-500/25">
+                  <i class="fa-solid fa-circle-xmark text-[9px]"></i> ปฏิเสธ
+                </span>
+              {% else %}
+                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-400 border border-amber-500/25">
+                  <i class="fa-solid fa-clock text-[9px] animate-pulse"></i> รอตรวจสอบ
+                </span>
+              {% endif %}
+            </td>
+            <td class="px-5 py-3.5 text-xs text-white/40 font-mono">{{ m.created_at.strftime('%d/%m/%Y') if m.created_at else '—' }}</td>
+            <td class="px-5 py-3.5 text-right">
+              <div class="flex items-center justify-end gap-1.5">
+                <!-- Preview Button -->
+                <a href="{{ url_for('model_detail', model_id=m.id) }}" target="_blank" title="ดูหน้าสินค้า (เปิดหน้าต่างใหม่)"
+                   class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-white/10 text-white/80 hover:bg-white/20 transition flex items-center gap-1">
+                  <i class="fa-solid fa-eye text-[10px]"></i> ดู
+                </a>
+
+                {% if not m.is_approved or m.status != 'อนุมัติแล้ว' %}
+                  <!-- Approve Button -->
+                  <form action="{{ url_for('admin_approve_model', model_id=m.id) }}" method="POST" class="inline">
+                    <button type="submit" title="อนุมัติสินค้าขึ้นตลาดกลาง"
+                            class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500 hover:text-white transition flex items-center gap-1">
+                      <i class="fa-solid fa-check text-[10px]"></i> อนุมัติ
+                    </button>
+                  </form>
+                {% else %}
+                  <!-- Reject Button -->
+                  <form action="{{ url_for('admin_reject_model', model_id=m.id) }}" method="POST" class="inline"
+                        onsubmit="return confirm('ยืนยันนำโมเดล \'{{ m.title }}\' ออกจากตลาดกลาง?')">
+                    <button type="submit" title="พักจำหน่าย"
+                            class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-amber-500/20 text-amber-400 border border-amber-500/30 hover:bg-amber-500 hover:text-white transition flex items-center gap-1">
+                      <i class="fa-solid fa-ban text-[10px]"></i> พักขาย
+                    </button>
+                  </form>
+                {% endif %}
+
+                <!-- Delete from .db Button -->
+                <form action="{{ url_for('admin_delete_model', model_id=m.id) }}" method="POST" class="inline"
+                      onsubmit="return confirm('⚠️ ยืนยันการลบโมเดล \'{{ m.title }}\' ออกจากระบบฐานข้อมูล (.db) ถาวร?')">
+                  <button type="submit" title="ลบออกจากฐานข้อมูล (.db)"
+                          class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-red-500/15 text-red-400 border border-red-500/30 hover:bg-red-500 hover:text-white transition flex items-center gap-1">
+                    <i class="fa-solid fa-trash-can text-[10px]"></i> ลบ (.db)
+                  </button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="9" class="px-6 py-12 text-center text-white/30 text-sm">ไม่มีข้อมูลโมเดล</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

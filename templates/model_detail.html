@@ -1,0 +1,537 @@
+{% extends "base.html" %}
+{% block title %}{{ model.title }} | PrintVerse 3D{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-10">
+
+  <!-- Breadcrumb & Back Navigation -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#E7E2D9] pb-5">
+    <div class="flex items-center space-x-2 text-xs text-stone-500 font-medium flex-wrap">
+      <a href="{{ url_for('index') }}" class="hover:text-[#FF6B4A] transition">ตลาดโมเดล 3D</a>
+      <span>/</span>
+      <a href="{{ url_for('index', category=model.category) }}" class="hover:text-[#FF6B4A] transition">{{ model.category }}</a>
+      <span>/</span>
+      <span class="text-stone-800 font-bold truncate max-w-[200px] sm:max-w-xs">{{ model.title }}</span>
+    </div>
+
+    <!-- ปุ่มย้อนกลับ -->
+    <a href="{{ url_for('index') }}" 
+       class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-white hover:bg-stone-50 text-stone-700 border border-[#E7E2D9] shadow-xs transition group flex-shrink-0">
+      <i class="fa-solid fa-arrow-left text-[#FF6B4A] group-hover:-translate-x-1 transition-transform"></i>
+      <span>ย้อนกลับไปหน้าตลาดกลาง</span>
+    </a>
+  </div>
+
+  <!-- Main Product Detail Grid (2 Columns) -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
+
+    <!-- Left Column: Full Product Image Viewer (6 cols) -->
+    <div class="lg:col-span-6 space-y-4">
+      
+      <!-- Full Image Container (เห็นรูปภาพเต็มรูปภาพ ไม่โดนตัดขอบ) -->
+      <div class="w-full bg-[#FAF8F5] border border-[#E7E2D9] rounded-3xl p-6 sm:p-8 flex items-center justify-center relative overflow-hidden min-h-[380px] sm:min-h-[460px] shadow-xs group">
+        {% if model.thumbnail_url %}
+          <img src="{{ model.thumbnail_url }}" 
+               alt="{{ model.title }}" 
+               class="w-full h-auto max-h-[460px] object-contain rounded-2xl shadow-sm transition duration-300 group-hover:scale-[1.02]">
+        {% else %}
+          <div class="flex flex-col items-center justify-center py-20 text-stone-400 space-y-3">
+            <div class="w-20 h-20 rounded-3xl bg-white border border-[#E7E2D9] flex items-center justify-center text-[#FF6B4A] shadow-xs text-3xl">
+              <i class="fa-solid fa-cube"></i>
+            </div>
+            <p class="text-xs font-medium">ไม่มีรูปภาพตัวอย่าง</p>
+          </div>
+        {% endif %}
+
+        <!-- Floating Format Badge (Top Left) -->
+        <div class="absolute top-4 left-4 z-10 flex items-center gap-2">
+          <span class="px-3 py-1 rounded-xl text-xs font-mono font-bold bg-white/95 backdrop-blur-md text-stone-800 border border-[#E7E2D9] shadow-sm">
+            .{{ model.primary_format }}
+          </span>
+          <span class="px-2.5 py-1 rounded-xl text-xs font-mono font-semibold bg-black/60 backdrop-blur-md text-white shadow-sm">
+            {{ model.file_size_mb }} MB
+          </span>
+        </div>
+
+        <!-- Floating Category Badge (Bottom Left) -->
+        <div class="absolute bottom-4 left-4 z-10">
+          <span class="px-3 py-1 rounded-xl text-xs font-semibold bg-white/95 backdrop-blur-md text-stone-700 border border-[#E7E2D9] shadow-sm">
+            <i class="fa-solid fa-tag text-[#FF6B4A] mr-1 text-[10px]"></i> {{ model.category }}
+          </span>
+        </div>
+
+        <!-- Moderation Badge (If not yet approved) -->
+        {% if not model.is_approved or model.status != 'อนุมัติแล้ว' %}
+          <div class="absolute top-4 right-4 z-10">
+            <span class="px-3 py-1 rounded-xl text-xs font-bold bg-amber-500/90 text-white shadow-sm flex items-center gap-1.5">
+              <i class="fa-solid fa-clock animate-pulse text-[10px]"></i> อยู่ระหว่างรอตรวจสอบ
+            </span>
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- Quick Trust Indicators (4 cols including Likes) -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 rounded-2xl bg-white border border-[#E7E2D9] text-center text-xs text-stone-600 shadow-xs">
+        <div class="space-y-0.5">
+          <span class="text-[10px] text-stone-400 uppercase font-semibold block">สถิติดาวน์โหลด</span>
+          <span class="font-bold text-stone-800 font-mono"><i class="fa-solid fa-download text-[#FF6B4A] mr-1"></i>{{ model.download_count or 0 }} ครั้ง</span>
+        </div>
+        <div class="space-y-0.5 border-l border-[#E7E2D9]">
+          <span class="text-[10px] text-stone-400 uppercase font-semibold block">ผู้ถูกใจโมเดล</span>
+          <span class="font-bold text-rose-600 font-mono"><i class="fa-solid fa-heart mr-1"></i><span id="detail-likes-stat">{{ model.likes_count or 0 }}</span> คน</span>
+        </div>
+        <div class="space-y-0.5 border-l border-[#E7E2D9]">
+          <span class="text-[10px] text-stone-400 uppercase font-semibold block">รูปแบบไฟล์</span>
+          <span class="font-bold text-stone-800 font-mono">{{ model.supported_formats or model.primary_format }}</span>
+        </div>
+        <div class="space-y-0.5 border-l border-[#E7E2D9]">
+          <span class="text-[10px] text-stone-400 uppercase font-semibold block">การรับประกัน</span>
+          <span class="font-bold text-emerald-600 flex items-center justify-center gap-1"><i class="fa-solid fa-circle-check text-xs"></i> 3D Print Ready</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Right Column: Product Title, Description, Specs & Action Buttons (6 cols) -->
+    <div class="lg:col-span-6 space-y-6">
+
+      <!-- Author Byline -->
+      <div class="flex items-center gap-3">
+        {% if model.author and model.author.avatar_url %}
+          <img src="{{ model.author.avatar_url }}" alt="{{ model.author.username }}" class="w-10 h-10 rounded-full object-cover border-2 border-[#E7E2D9] shadow-xs">
+        {% else %}
+          <div class="w-10 h-10 rounded-full bg-[#FF6B4A]/15 text-[#FF6B4A] flex items-center justify-center font-bold text-sm border border-[#FF6B4A]/30">
+            {{ (model.author.username if model.author else 'P')[0]|upper }}
+          </div>
+        {% endif %}
+        <div>
+          <span class="text-xs font-bold text-stone-800 block">
+            {{ model.author.username if model.author else 'PrintVerse Studio' }}
+          </span>
+          <span class="text-[10px] text-stone-400 flex items-center gap-1.5">
+            <span class="px-1.5 py-0.2 rounded bg-stone-100 text-stone-600 font-semibold">{{ model.author.maker_badge if model.author else 'Official Creator' }}</span>
+            <span>• เผยแพร่เมื่อ {{ model.created_at.strftime('%d/%m/%Y') if model.created_at else '—' }}</span>
+          </span>
+        </div>
+      </div>
+
+      <!-- ชื่อสินค้าชัดๆ (Prominent Product Title) & ปุ่มถูกใจ -->
+      <div class="flex items-start justify-between gap-4">
+        <h1 class="text-2xl sm:text-3xl font-extrabold text-[#1C1917] tracking-tight leading-snug flex-1">
+          {{ model.title }}
+        </h1>
+
+        <!-- Like / Favorite Button -->
+        {% if current_user.is_authenticated %}
+          <button type="button" onclick="toggleDetailLike(event, {{ model.id }})" id="detail-like-btn"
+                  class="flex-shrink-0 px-3.5 py-2 rounded-2xl text-xs font-bold transition flex items-center gap-2 border shadow-xs {% if model.id in liked_model_ids %}bg-rose-50 border-rose-200 text-rose-600 hover:bg-rose-100{% else %}bg-white border-[#E7E2D9] text-stone-700 hover:border-rose-300 hover:text-rose-600{% endif %}"
+                  title="{% if model.id in liked_model_ids %}ยกเลิกถูกใจ{% else %}กดถูกใจโมเดลนี้{% endif %}">
+            <i id="detail-like-icon" class="{% if model.id in liked_model_ids %}fa-solid fa-heart text-rose-500{% else %}fa-regular fa-heart{% endif %} text-base"></i>
+            <span id="detail-like-label" class="hidden sm:inline">{% if model.id in liked_model_ids %}ถูกใจแล้ว{% else %}กดถูกใจ{% endif %}</span>
+            <span id="detail-like-count" class="px-2 py-0.5 rounded-full bg-rose-100/70 text-[11px] font-mono text-rose-700 font-bold">{{ model.likes_count or 0 }}</span>
+          </button>
+        {% else %}
+          <a href="{{ url_for('login') }}" class="flex-shrink-0 px-3.5 py-2 rounded-2xl text-xs font-bold transition flex items-center gap-2 border border-[#E7E2D9] bg-white text-stone-700 hover:border-rose-300 hover:text-rose-600 shadow-xs" title="เข้าสู่ระบบเพื่อกดถูกใจ">
+            <i class="fa-regular fa-heart text-base"></i>
+            <span class="hidden sm:inline">กดถูกใจ</span>
+            <span class="px-2 py-0.5 rounded-full bg-stone-100 text-[11px] font-mono text-stone-700 font-bold">{{ model.likes_count or 0 }}</span>
+          </a>
+        {% endif %}
+      </div>
+
+      <!-- กล่องราคาชัดๆ (Prominent Price Card) -->
+      <div class="p-5 rounded-2xl bg-[#FAF8F5] border border-[#E7E2D9] flex items-center justify-between">
+        <div>
+          <span class="text-[11px] font-semibold text-stone-400 uppercase tracking-wider block">ราคาจำหน่ายโมเดล 3D</span>
+          <div class="flex items-baseline gap-2 mt-0.5">
+            {% if model.is_free or model.price == 0 %}
+              <span class="text-3xl sm:text-4xl font-black text-emerald-600">ฟรี (Free)</span>
+              <span class="text-xs text-stone-500 font-medium">ดาวน์โหลดได้ทันที</span>
+            {% else %}
+              <span class="text-3xl sm:text-4xl font-black text-[#FF6B4A] font-mono">฿{{ "%.2f"|format(model.price) }}</span>
+              <span class="text-xs text-stone-500 font-semibold">บาท (THB)</span>
+            {% endif %}
+          </div>
+        </div>
+
+        {% if model.is_free or model.price == 0 %}
+        <div class="text-right">
+          <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700">
+            <i class="fa-solid fa-gift text-[10px]"></i>
+            <span>ดาวน์โหลดฟรี</span>
+          </span>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- คำอธิบายรายละเอียดสินค้าแบบชัดๆ (Detailed Description) -->
+      <div class="p-6 rounded-2xl bg-white border border-[#E7E2D9] space-y-2.5 shadow-xs">
+        <h3 class="text-xs font-bold text-stone-800 uppercase tracking-wider flex items-center gap-2">
+          <i class="fa-solid fa-align-left text-[#FF6B4A]"></i>
+          <span>รายละเอียดสินค้า & คำอธิบาย</span>
+        </h3>
+        <p class="text-xs sm:text-sm text-stone-700 leading-relaxed whitespace-pre-line font-normal">
+          {{ model.description or 'ผู้สร้างไม่ได้ระบุคำอธิบายเพิ่มเติมสำหรับโมเดลนี้ ไฟล์พร้อมสำหรับการพิมพ์ 3 มิติทันที' }}
+        </p>
+      </div>
+
+      <!-- ข้อมูลการพิมพ์ 3D Parameters & Specs ชัดเจน -->
+      <div class="p-6 rounded-2xl bg-white border border-[#E7E2D9] space-y-4 shadow-xs">
+        <h3 class="text-xs font-bold text-stone-800 uppercase tracking-wider flex items-center gap-2">
+          <i class="fa-solid fa-sliders text-[#FF6B4A]"></i>
+          <span>พารามิเตอร์การพิมพ์ (3D Print Specifications)</span>
+        </h3>
+
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+          <!-- Layer Height -->
+          <div class="p-3 rounded-xl bg-[#FAF8F5] border border-[#E7E2D9]/70 space-y-1">
+            <span class="text-[10px] text-stone-400 font-medium block">Layer Height</span>
+            <span class="font-bold text-stone-800 font-mono">{{ model.print_setting.layer_height if model.print_setting else '0.20 mm' }}</span>
+          </div>
+
+          <!-- Infill -->
+          <div class="p-3 rounded-xl bg-[#FAF8F5] border border-[#E7E2D9]/70 space-y-1">
+            <span class="text-[10px] text-stone-400 font-medium block">Infill (ความหนาแน่น)</span>
+            <span class="font-bold text-stone-800 font-mono">{{ model.print_setting.infill_percentage if model.print_setting else 20 }}%</span>
+          </div>
+
+          <!-- Supports -->
+          <div class="p-3 rounded-xl bg-[#FAF8F5] border border-[#E7E2D9]/70 space-y-1">
+            <span class="text-[10px] text-stone-400 font-medium block">การใช้ Support</span>
+            <span class="font-bold {% if model.print_setting and model.print_setting.supports_required %}text-amber-600{% else %}text-emerald-600{% endif %}">
+              {{ 'ต้องใช้ Support' if (model.print_setting and model.print_setting.supports_required) else 'ไม่ต้องใช้ (Print-in-Place)' }}
+            </span>
+          </div>
+
+          <!-- Material -->
+          <div class="p-3 rounded-xl bg-[#FAF8F5] border border-[#E7E2D9]/70 space-y-1">
+            <span class="text-[10px] text-stone-400 font-medium block">วัสดุแนะนำ</span>
+            <span class="font-bold text-stone-800 truncate block">{{ model.filament_info.material_type if model.filament_info else 'PLA / PETG' }}</span>
+          </div>
+        </div>
+
+        {% if model.filament_info and model.filament_info.filament_weight_grams %}
+          <div class="text-[11px] text-stone-500 flex items-center gap-1.5 pt-1">
+            <i class="fa-solid fa-weight-hanging text-stone-400"></i>
+            <span>ประมาณการน้ำหนักเส้นพลาสติก: <strong>~{{ model.filament_info.filament_weight_grams }} กรัม</strong></span>
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- ปุ่มซื้อ และ ใส่ตะกร้า (Action Buttons Section) -->
+      <div class="space-y-3 pt-2">
+        {% if is_purchased %}
+          <!-- Already Purchased Banner -->
+          <div class="p-5 rounded-2xl bg-emerald-50 border border-emerald-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center text-lg flex-shrink-0">
+                <i class="fa-solid fa-check"></i>
+              </div>
+              <div>
+                <p class="text-sm font-bold text-emerald-900">คุณเป็นเจ้าของโมเดลนี้แล้ว!</p>
+                <p class="text-xs text-emerald-700">สามารถดาวน์โหลดไฟล์เพื่อนำไปพิมพ์ 3 มิติได้ทันที</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <a href="{{ url_for('download_model_file', model_id=model.id) }}" 
+                 class="px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm transition flex items-center gap-2 flex-shrink-0">
+                <i class="fa-solid fa-download"></i>
+                <span>ดาวน์โหลดไฟล์ 3D ทันที</span>
+              </a>
+              <a href="{{ url_for('dashboard') }}" 
+                 class="px-4 py-2.5 rounded-xl text-xs font-bold text-emerald-800 bg-white border border-emerald-200 hover:bg-emerald-100/50 transition flex items-center gap-1.5 flex-shrink-0">
+                <i class="fa-solid fa-folder-open"></i>
+                <span>คลังของฉัน</span>
+              </a>
+            </div>
+          </div>
+        {% else %}
+          <!-- Purchase & Add to Cart Action Buttons -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            
+            <!-- ปุ่มใส่ตะกร้า -->
+            {% if in_cart %}
+              <a href="{{ url_for('cart') }}" 
+                 class="w-full py-4 px-6 rounded-2xl font-bold text-xs sm:text-sm bg-[#FAF8F5] border-2 border-[#FF6B4A] text-[#FF6B4A] hover:bg-[#FF6B4A]/10 transition flex items-center justify-center gap-2 shadow-xs">
+                <i class="fa-solid fa-check text-sm"></i>
+                <span>อยู่ในตะกร้าแล้ว (เปิดตะกร้า)</span>
+              </a>
+            {% else %}
+              <form method="POST" action="{{ url_for('cart_add', model_id=model.id) }}" class="w-full">
+                <button type="submit" 
+                        class="w-full py-4 px-6 rounded-2xl font-bold text-xs sm:text-sm bg-white border border-[#E7E2D9] text-stone-800 hover:border-[#FF6B4A] hover:text-[#FF6B4A] hover:bg-[#FAF8F5] transition flex items-center justify-center gap-2 shadow-xs group">
+                  <i class="fa-solid fa-cart-plus text-[#FF6B4A] text-sm group-hover:scale-110 transition-transform"></i>
+                  <span>ใส่ตะกร้าสินค้า</span>
+                </button>
+              </form>
+            {% endif %}
+
+            <!-- ปุ่มซื้อทันที / ดาวน์โหลดฟรี -->
+            {% if model.is_free or model.price == 0 %}
+              <a href="{{ url_for('download_model_file', model_id=model.id) }}" 
+                 class="w-full py-4 px-6 rounded-2xl font-bold text-xs sm:text-sm text-white bg-[#1C1917] hover:bg-stone-800 transition flex items-center justify-center gap-2 shadow-xs">
+                <i class="fa-solid fa-download text-sm"></i>
+                <span>ดาวน์โหลดฟรีทันที</span>
+              </a>
+            {% else %}
+              <button type="button" onclick="openBuyConfirmModal()"
+                      class="w-full py-4 px-6 rounded-2xl font-bold text-xs sm:text-sm text-white bg-[#FF6B4A] hover:bg-[#E85938] shadow-md shadow-[#FF6B4A]/25 transition flex items-center justify-center gap-2 group">
+                <i class="fa-solid fa-bolt text-sm group-hover:scale-110 transition-transform"></i>
+                <span>ซื้อทันที (฿{{ "%.2f"|format(model.price) }})</span>
+              </button>
+            {% endif %}
+
+          </div>
+
+          <!-- Wallet Balance & Top-up Helper -->
+          {% if current_user.is_authenticated %}
+            {% if not model.is_free and model.price > 0 %}
+              <div class="flex items-center justify-between p-3.5 rounded-xl bg-[#FAF8F5] border border-[#E7E2D9] text-xs">
+                <span class="text-stone-500">
+                  ยอดเงินในกระเป๋าของคุณ: <strong class="text-stone-800 font-mono">฿{{ "%.2f"|format(current_user.wallet_balance) }}</strong>
+                  {% if current_user.wallet_balance < model.price %}
+                    <span class="text-rose-500 font-semibold ml-1">(ยอดเงินไม่พอสำหรับการซื้อทันที ฿{{ "%.2f"|format(model.price) }})</span>
+                  {% endif %}
+                </span>
+                <a href="{{ url_for('topup') }}" class="font-bold text-[#FF6B4A] hover:underline flex items-center gap-1">
+                  <i class="fa-solid fa-plus text-[10px]"></i> เติมเงินเข้ากระเป๋า
+                </a>
+              </div>
+            {% endif %}
+          {% else %}
+            <div class="flex items-center justify-between p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-800">
+              <span class="flex items-center gap-1.5">
+                <i class="fa-solid fa-circle-info text-amber-600"></i>
+                เข้าสู่ระบบเพื่อสั่งซื้อ หรือดาวน์โหลดไฟล์โมเดลนี้
+              </span>
+              <a href="{{ url_for('login') }}" class="font-bold text-[#FF6B4A] hover:underline flex items-center gap-1">
+                เข้าสู่ระบบ <i class="fa-solid fa-arrow-right text-[10px]"></i>
+              </a>
+            </div>
+          {% endif %}
+        {% endif %}
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- Related Products in Same Category -->
+  {% if related_models %}
+    <div class="pt-8 border-t border-[#E7E2D9] space-y-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-lg font-bold text-[#1C1917]">โมเดล 3D ที่เกี่ยวข้องในหมวด "{{ model.category }}"</h2>
+          <p class="text-xs text-stone-500">ผลงานออกแบบอื่นๆ ที่อาจตรงกับความต้องการของคุณ</p>
+        </div>
+        <a href="{{ url_for('index', category=model.category) }}" class="text-xs font-bold text-[#FF6B4A] hover:underline">
+          ดูทั้งหมดในหมวดนี้ →
+        </a>
+      </div>
+
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6">
+        {% for r in related_models %}
+          <a href="{{ url_for('model_detail', model_id=r.id) }}" class="bg-white border border-[#E7E2D9] rounded-2xl overflow-hidden hover:border-[#FF6B4A] hover:shadow-md transition group flex flex-col">
+            <div class="h-36 bg-[#FAF8F5] flex items-center justify-center p-2 relative overflow-hidden">
+              {% if r.thumbnail_url %}
+                <img src="{{ r.thumbnail_url }}" alt="{{ r.title }}" class="w-full h-full object-contain group-hover:scale-105 transition duration-300">
+              {% else %}
+                <i class="fa-solid fa-cube text-xl text-stone-400 group-hover:text-[#FF6B4A] transition"></i>
+              {% endif %}
+              <div class="absolute top-2 left-2">
+                <span class="px-2 py-0.5 rounded text-[9px] font-mono font-bold bg-white/95 text-stone-800 border border-[#E7E2D9]">.{{ r.primary_format }}</span>
+              </div>
+            </div>
+            <div class="p-3 flex-1 flex flex-col justify-between">
+              <h4 class="text-xs font-bold text-stone-800 truncate group-hover:text-[#FF6B4A] transition">{{ r.title }}</h4>
+              <div class="mt-2 flex items-center justify-between text-xs">
+                {% if r.is_free or r.price == 0 %}
+                  <span class="font-bold text-emerald-600 text-[11px]">ฟรี</span>
+                {% else %}
+                  <span class="font-bold text-[#FF6B4A] font-mono text-[11px]">฿{{ "%.2f"|format(r.price) }}</span>
+                {% endif %}
+                <span class="text-[10px] text-stone-400">ดูสินค้า →</span>
+              </div>
+            </div>
+          </a>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+
+</div>
+
+<!-- JavaScript for Interactive Like Toggle on Detail Page -->
+<script>
+  function toggleDetailLike(event, modelId) {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+
+    fetch(`/model/${modelId}/like`, {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.status === 'ok') {
+        const btn = document.getElementById('detail-like-btn');
+        const icon = document.getElementById('detail-like-icon');
+        const label = document.getElementById('detail-like-label');
+        const count = document.getElementById('detail-like-count');
+        const stat = document.getElementById('detail-likes-stat');
+
+        if (count) count.innerText = data.likes_count;
+        if (stat) stat.innerText = data.likes_count;
+
+        if (btn) {
+          if (data.liked) {
+            btn.className = 'flex-shrink-0 px-3.5 py-2 rounded-2xl text-xs font-bold transition flex items-center gap-2 border shadow-xs bg-rose-50 border-rose-200 text-rose-600 hover:bg-rose-100';
+            if (icon) icon.className = 'fa-solid fa-heart text-rose-500 text-base';
+            if (label) label.innerText = 'ถูกใจแล้ว';
+            btn.title = 'ยกเลิกถูกใจ';
+          } else {
+            btn.className = 'flex-shrink-0 px-3.5 py-2 rounded-2xl text-xs font-bold transition flex items-center gap-2 border shadow-xs bg-white border-[#E7E2D9] text-stone-700 hover:border-rose-300 hover:text-rose-600';
+            if (icon) icon.className = 'fa-regular fa-heart text-base';
+            if (label) label.innerText = 'กดถูกใจ';
+            btn.title = 'กดถูกใจโมเดลนี้';
+          }
+        }
+      }
+    })
+    .catch(err => {
+      console.error('Error toggling like:', err);
+    });
+  }
+
+  function openBuyConfirmModal() {
+    const modal = document.getElementById('buy-confirm-modal');
+    if (modal) modal.classList.remove('hidden');
+  }
+
+  function closeBuyConfirmModal() {
+    const modal = document.getElementById('buy-confirm-modal');
+    if (modal) modal.classList.add('hidden');
+  }
+</script>
+
+<!-- Buy Confirmation Modal (ยืนยันการสั่งซื้อ & ยกเลิก) -->
+<div id="buy-confirm-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 hidden" onclick="closeBuyConfirmModal()">
+  <div class="bg-white border border-[#E7E2D9] rounded-3xl max-w-lg w-full p-6 sm:p-7 space-y-5 shadow-2xl relative" onclick="event.stopPropagation()">
+    
+    <!-- Close [X] Button -->
+    <button type="button" onclick="closeBuyConfirmModal()" class="absolute top-5 right-5 w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-500 hover:text-stone-800 flex items-center justify-center transition" title="ปิดหน้าต่าง">
+      <i class="fa-solid fa-xmark text-sm"></i>
+    </button>
+
+    <!-- Modal Title -->
+    <div class="space-y-1 pr-8">
+      <div class="flex items-center gap-2">
+        <div class="w-7 h-7 rounded-lg bg-[#FF6B4A]/10 text-[#FF6B4A] flex items-center justify-center text-xs">
+          <i class="fa-solid fa-cart-shopping"></i>
+        </div>
+        <h3 class="text-base font-extrabold text-[#1C1917]">ยืนยันการสั่งซื้อโมเดล 3 มิติ</h3>
+      </div>
+      <p class="text-xs text-stone-500">กรุณาตรวจสอบรายละเอียดรายการและยืนยันการทำรายการ</p>
+    </div>
+
+    <!-- Item Preview Card -->
+    <div class="flex items-center gap-3.5 p-3.5 bg-[#FAF8F5] rounded-2xl border border-[#E7E2D9]">
+      <div class="w-16 h-16 rounded-xl bg-white border border-[#E7E2D9] overflow-hidden flex-shrink-0 flex items-center justify-center p-1">
+        {% if model.thumbnail_url %}
+          <img src="{{ model.thumbnail_url }}" alt="{{ model.title }}" class="w-full h-full object-contain">
+        {% else %}
+          <i class="fa-solid fa-cube text-xl text-[#FF6B4A]"></i>
+        {% endif %}
+      </div>
+      <div class="space-y-0.5 min-w-0 flex-1">
+        <h4 class="font-bold text-xs text-[#1C1917] truncate">{{ model.title }}</h4>
+        <p class="text-[11px] text-stone-500 truncate">หมวดหมู่: {{ model.category }} • ฟอร์แมต: .{{ model.primary_format }}</p>
+        <p class="text-[11px] text-stone-400 truncate">ผู้สร้าง: {{ model.author.username if model.author else 'PrintVerse' }}</p>
+      </div>
+    </div>
+
+    <!-- Financial Breakdown -->
+    <div class="space-y-2 p-3.5 rounded-2xl bg-white border border-[#E7E2D9] text-xs">
+      <div class="flex items-center justify-between text-stone-500">
+        <span>{{ t('model_price_base') }}</span>
+        <span class="font-mono text-stone-700 font-semibold">฿{{ "%.2f"|format(model.price / 1.07) }}</span>
+      </div>
+      <div class="flex items-center justify-between text-stone-500">
+        <span class="flex items-center gap-1">
+          <span>{{ t('vat_amount') }}</span>
+          <span class="text-[9px] px-1 py-0.2 rounded bg-purple-100 text-purple-700 font-bold">7%</span>
+        </span>
+        <span class="font-mono text-purple-700 font-semibold">฿{{ "%.2f"|format(model.price - (model.price / 1.07)) }}</span>
+      </div>
+      <div class="flex items-center justify-between font-bold pt-2 border-t border-[#E7E2D9] text-sm text-[#1C1917]">
+        <div>
+          <span>{{ t('total_payment') }}</span>
+          <span class="block text-[10px] font-normal text-purple-700">{{ t('vat_included') }}</span>
+        </div>
+        <span class="font-mono text-[#FF6B4A] text-base font-black">฿{{ "%.2f"|format(model.price) }}</span>
+      </div>
+    </div>
+
+    <!-- Wallet Balance Status Card -->
+    {% if current_user.is_authenticated %}
+      {% if current_user.wallet_balance >= model.price %}
+        <div class="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 space-y-1">
+          <div class="flex items-center justify-between font-medium">
+            <span>{{ t('wallet_balance_current') }}:</span>
+            <span class="font-mono font-bold">฿{{ "%.2f"|format(current_user.wallet_balance) }}</span>
+          </div>
+          <div class="flex items-center justify-between text-emerald-700 font-bold">
+            <span>{{ t('wallet_balance_after') }}:</span>
+            <span class="font-mono">฿{{ "%.2f"|format(current_user.wallet_balance - model.price) }}</span>
+          </div>
+        </div>
+      {% else %}
+        <div class="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-800 space-y-2">
+          <div class="flex items-center gap-2 font-bold">
+            <i class="fa-solid fa-circle-exclamation text-rose-500"></i>
+            <span>{{ t('insufficient_balance') }}</span>
+          </div>
+          <p class="text-[11px] text-rose-600">
+            ต้องการ ฿{{ "%.2f"|format(model.price) }} แต่ในกระเป๋ามี ฿{{ "%.2f"|format(current_user.wallet_balance) }} (ขาดอีก ฿{{ "%.2f"|format(model.price - current_user.wallet_balance) }})
+          </p>
+          <div class="pt-1">
+            <a href="{{ url_for('topup') }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#FF6B4A] text-white font-bold text-xs hover:bg-[#E85938] transition shadow-xs">
+              <i class="fa-solid fa-plus text-[10px]"></i> {{ t('nav_topup') }}
+            </a>
+          </div>
+        </div>
+      {% endif %}
+    {% endif %}
+
+    <!-- Confirmation Buttons (ยืนยันการซื้อ & ยกเลิก) -->
+    <div class="flex items-center justify-end gap-3 pt-2 border-t border-[#E7E2D9]">
+      <!-- ปุ่มยกเลิก -->
+      <button type="button" onclick="closeBuyConfirmModal()"
+              class="px-5 py-2.5 rounded-xl text-xs font-bold text-stone-600 bg-[#FAF8F5] border border-[#E7E2D9] hover:bg-stone-200 transition">
+        {{ t('cancel_btn') }}
+      </button>
+
+      {% if current_user.is_authenticated and current_user.wallet_balance >= model.price %}
+        <!-- ปุ่มยืนยันการซื้อ -->
+        <form method="POST" action="{{ url_for('buy_model', model_id=model.id) }}" class="inline">
+          <button type="submit"
+                  class="px-6 py-2.5 rounded-xl text-xs font-bold text-white bg-[#FF6B4A] hover:bg-[#E85938] shadow-md shadow-[#FF6B4A]/25 transition flex items-center gap-2">
+            <i class="fa-solid fa-check"></i>
+            <span>{{ t('confirm_btn') }}</span>
+          </button>
+        </form>
+      {% elif not current_user.is_authenticated %}
+        <a href="{{ url_for('login') }}" class="px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-[#FF6B4A] hover:bg-[#E85938] transition">
+          เข้าสู่ระบบเพื่อซื้อ
+        </a>
+      {% endif %}
+    </div>
+
+  </div>
+</div>
+{% endblock %}

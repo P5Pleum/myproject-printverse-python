@@ -1,0 +1,625 @@
+{% extends "base.html" %}
+{% block title %}เติมเงินเข้ากระเป๋า | PrintVerse 3D{% endblock %}
+
+{% block content %}
+<div class="w-full flex-1 max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 space-y-8">
+
+  <!-- Top Navigation & Current Balance Card -->
+  <!-- Navigation Tabs & Balance Header -->
+  <div class="w-full bg-white border border-[#E7E2D9] rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+    <div class="space-y-3">
+      <!-- Tab Switcher between Top-up, Withdraw, and Transactions -->
+      <div class="inline-flex items-center p-1 bg-[#FAF8F5] border border-[#E7E2D9] rounded-2xl text-xs font-bold">
+        <a href="{{ url_for('topup') }}" class="px-4 py-2 rounded-xl bg-white text-emerald-600 shadow-xs flex items-center gap-1.5 border border-[#E7E2D9]/60">
+          <i class="fa-solid fa-arrow-down text-emerald-600"></i>
+          <span>เติมเงินเข้ากระเป๋า</span>
+        </a>
+        <a href="{{ url_for('withdraw') }}" class="px-4 py-2 rounded-xl text-stone-500 hover:text-[#1C1917] transition flex items-center gap-1.5">
+          <i class="fa-solid fa-arrow-up text-[#FF6B4A]"></i>
+          <span>ถอนเงินกลับบัญชี</span>
+        </a>
+        <a href="{{ url_for('wallet_transactions') }}" class="px-4 py-2 rounded-xl text-stone-500 hover:text-[#1C1917] transition flex items-center gap-1.5">
+          <i class="fa-solid fa-receipt text-purple-600"></i>
+          <span>ประวัติโอนเข้า-ออก</span>
+        </a>
+      </div>
+
+      <div>
+        <h1 class="text-2xl sm:text-3xl font-extrabold text-[#1C1917] tracking-tight">เติมเงินเข้ากระเป๋า (Wallet Top-up)</h1>
+        <p class="text-xs text-stone-500 mt-1">เลือกช่องทางการชำระเงิน โอนเงินตามยอดที่ต้องการ แล้วแนบสลิปเพื่อส่งให้แอดมินตรวจสอบยอดเงินเข้ากระเป๋า</p>
+      </div>
+    </div>
+
+    <!-- Balance Box -->
+    <div class="bg-[#FAF8F5] border border-[#E7E2D9] rounded-2xl p-4 sm:px-6 text-right flex-shrink-0 flex sm:flex-col items-center sm:items-end justify-between sm:justify-center">
+      <span class="text-[11px] uppercase tracking-wider text-stone-400 font-semibold block">ยอดเงินปัจจุบัน</span>
+      <span class="text-2xl sm:text-3xl font-black text-[#FF6B4A]">฿{{ "%.2f"|format(user.wallet_balance) }}</span>
+    </div>
+  </div>
+
+  <!-- Main Topup Grid: Channels & Slip Form -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+
+    <!-- Left Column: Payment Methods Display (5 cols) -->
+    <div class="lg:col-span-5 space-y-6">
+
+      <!-- Channel Selector Tabs -->
+      <div class="bg-white border border-[#E7E2D9] rounded-3xl p-6 shadow-sm space-y-6">
+        <div class="border-b border-[#E7E2D9] pb-3">
+          <h2 class="text-base font-bold text-[#1C1917]">1. ช่องทางชำระเงิน</h2>
+          <p class="text-xs text-stone-500">เลือกโอนผ่าน พร้อมเพย์ QR, บัญชีธนาคาร (Banking) หรือ TrueMoney</p>
+        </div>
+
+        <!-- Buttons for tab switching (3 Channels) -->
+        <div class="grid grid-cols-3 gap-1.5 p-1 bg-[#FAF8F5] border border-[#E7E2D9] rounded-2xl text-[11px] sm:text-xs font-bold">
+          <button type="button" id="tab-btn-qr" onclick="switchChannel('qr')"
+                  class="py-2.5 px-2 rounded-xl transition text-center flex items-center justify-center gap-1 bg-white text-[#1C1917] shadow-xs">
+            <i class="fa-solid fa-qrcode text-purple-600"></i>
+            <span>พร้อมเพย์ QR</span>
+          </button>
+          <button type="button" id="tab-btn-banking" onclick="switchChannel('banking')"
+                  class="py-2.5 px-2 rounded-xl transition text-center flex items-center justify-center gap-1 text-stone-500 hover:text-[#1C1917]">
+            <i class="fa-solid fa-building-columns text-sky-600"></i>
+            <span>Banking</span>
+          </button>
+          <button type="button" id="tab-btn-truemoney" onclick="switchChannel('truemoney')"
+                  class="py-2.5 px-2 rounded-xl transition text-center flex items-center justify-center gap-1 text-stone-500 hover:text-[#1C1917]">
+            <i class="fa-solid fa-wallet text-orange-500"></i>
+            <span>TrueMoney</span>
+          </button>
+        </div>
+
+        <!-- Tab 1: QR Code PromptPay View -->
+        <div id="channel-qr-view" class="space-y-4">
+          <div class="bg-[#FAF8F5] border border-[#E7E2D9] rounded-2xl p-4 flex flex-col items-center text-center">
+            <div class="w-full max-w-[240px] bg-white p-3 rounded-2xl border border-[#E7E2D9] shadow-sm mb-3">
+              <img src="{{ url_for('serve_photo', filename='Qr code.png') }}" 
+                   alt="Thai QR Payment PromptPay" 
+                   class="w-full h-auto object-contain rounded-xl">
+            </div>
+            <div class="space-y-1">
+              <span class="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200">
+                พร้อมเพย์ / Thai QR Payment
+              </span>
+              <p class="text-xs font-bold text-[#1C1917] pt-1">ชื่อบัญชี: นาย ธนธัส เกษแก้ว</p>
+              <p class="text-[11px] text-stone-500">ธนาคารกรุงไทย / สแกนได้ทุกแอปธนาคาร</p>
+            </div>
+          </div>
+          <p class="text-[11px] text-stone-500 text-center leading-relaxed">
+            * สแกน QR Code แล้วโอนเงิน (ระบบจะกำหนดช่องทางเป็น <strong class="text-purple-700">พร้อมเพย์</strong> อัตโนมัติ ไม่ต้องเลือกธนาคาร)
+          </p>
+        </div>
+
+        <!-- Tab 2: Banking View (โอนผ่านเลขบัญชี) -->
+        <div id="channel-banking-view" class="space-y-4 hidden">
+          <div class="bg-gradient-to-br from-sky-500/10 via-blue-500/5 to-white border border-sky-200 rounded-2xl p-6 text-center space-y-4">
+            <div class="w-14 h-14 mx-auto rounded-2xl bg-sky-500 text-white flex items-center justify-center text-2xl shadow-md shadow-sky-500/20">
+              <i class="fa-solid fa-building-columns"></i>
+            </div>
+            <div>
+              <span class="text-[11px] font-bold text-sky-700 uppercase tracking-wider block">ธนาคารกรุงไทย (KTB)</span>
+              <p class="text-2xl font-black text-[#1C1917] tracking-wider mt-1 font-mono" id="banking-acc">919-0-582233</p>
+              <p class="text-xs font-semibold text-stone-700 mt-1">ชื่อบัญชี: นาย ธนธัส เกษแก้ว</p>
+            </div>
+
+            <!-- Copy Bank Account button -->
+            <button type="button" onclick="copyBankAccount()" 
+                    class="w-full py-2.5 px-4 rounded-xl text-xs font-bold bg-white hover:bg-sky-50 text-sky-700 border border-sky-200 shadow-xs transition flex items-center justify-center gap-2">
+              <i class="fa-regular fa-copy"></i>
+              <span id="copy-bank-btn-text">คัดลอกเลขบัญชี 919-0-582233</span>
+            </button>
+          </div>
+          <div class="text-[11px] text-stone-500 space-y-1 bg-[#FAF8F5] p-3 rounded-xl border border-[#E7E2D9]">
+            <p class="font-bold text-stone-700">ขั้นตอนการโอนผ่านบัญชี Banking:</p>
+            <p>1. เปิดแอปพลิเคชันธนาคารของคุณ (เช่น K PLUS, SCB EASY, NEXT)</p>
+            <p>2. โอนเงินมาที่ <span class="font-bold text-sky-700">ธนาคารกรุงไทย</span> เลขที่ <span class="font-bold font-mono text-sky-700">919-0-582233</span></p>
+            <p>3. เลือกธนาคารที่คุณใช้โอนในแบบฟอร์มด้านขวา และแนบสลิป</p>
+          </div>
+        </div>
+
+        <!-- Tab 3: TrueMoney Wallet View -->
+        <div id="channel-truemoney-view" class="space-y-4 hidden">
+          <div class="bg-gradient-to-br from-orange-500/10 via-amber-500/5 to-white border border-orange-200 rounded-2xl p-6 text-center space-y-4">
+            <div class="w-14 h-14 mx-auto rounded-2xl bg-orange-500 text-white flex items-center justify-center text-2xl shadow-md shadow-orange-500/20">
+              <i class="fa-solid fa-wallet"></i>
+            </div>
+            <div>
+              <span class="text-[11px] font-bold text-orange-600 uppercase tracking-wider block">TrueMoney Wallet</span>
+              <p class="text-2xl font-black text-[#1C1917] tracking-wider mt-1 font-mono" id="truemoney-phone">0955609261</p>
+              <p class="text-xs font-semibold text-stone-700 mt-1">ชื่อบัญชี: ธนธัส เกษแก้ว</p>
+            </div>
+
+            <!-- Copy button -->
+            <button type="button" onclick="copyTrueMoney()" 
+                    class="w-full py-2.5 px-4 rounded-xl text-xs font-bold bg-white hover:bg-orange-50 text-orange-600 border border-orange-200 shadow-xs transition flex items-center justify-center gap-2">
+              <i class="fa-regular fa-copy"></i>
+              <span id="copy-btn-text">คัดลอกเบอร์ TrueMoney</span>
+            </button>
+          </div>
+          <div class="text-[11px] text-stone-500 space-y-1 bg-[#FAF8F5] p-3 rounded-xl border border-[#E7E2D9]">
+            <p class="font-bold text-stone-700">ขั้นตอนการโอนผ่าน TrueMoney:</p>
+            <p>1. เปิดแอป TrueMoney แล้วเลือกเมนู "โอนเงิน"</p>
+            <p>2. ใส่เบอร์ <span class="font-bold text-orange-600">0955609261</span> (ธนธัส เกษแก้ว)</p>
+            <p>3. โอนเงินและบันทึกภาพสลิปหลักฐาน</p>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Right Column: Top-up Form with Slip Upload (7 cols) -->
+    <div class="lg:col-span-7">
+      <div class="bg-white border border-[#E7E2D9] rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
+        <div class="border-b border-[#E7E2D9] pb-4">
+          <h2 class="text-lg font-bold text-[#1C1917]">2. แบบฟอร์มแจ้งโอนเงิน & แนบสลิป</h2>
+          <p class="text-xs text-stone-500 mt-0.5">กรอกข้อมูลการโอนและแนบสลิปหลักฐานเพื่อตรวจสอบและรับยอดเงิน</p>
+        </div>
+
+        <form method="POST" action="{{ url_for('topup') }}" enctype="multipart/form-data" class="space-y-5">
+          
+          <!-- Amount Section -->
+          <div>
+            <label for="amount" class="block text-[11px] font-semibold text-stone-600 mb-1.5 uppercase tracking-wider">
+              จำนวนเงินที่โอน (บาท) <span class="text-rose-500">*</span>
+            </label>
+            <div class="relative">
+              <span class="absolute left-4 top-3 text-stone-400 font-bold text-sm">฿</span>
+              <input type="number" id="amount" name="amount" min="1" step="0.01" required placeholder="0.00" oninput="calculateTopupFee(this.value)"
+                     class="w-full pl-9 pr-4 py-3 rounded-xl bg-[#FAF8F5] border border-[#E7E2D9] text-[#1C1917] font-bold text-base focus:outline-none focus:bg-white focus:border-[#FF6B4A] focus:ring-2 focus:ring-[#FF6B4A]/10 transition">
+            </div>
+
+            <!-- Quick Amount Badges -->
+            <div class="flex flex-wrap gap-2 mt-2.5">
+              <button type="button" onclick="setAmount(50)" class="px-3 py-1 rounded-lg text-xs font-semibold bg-[#FAF8F5] border border-[#E7E2D9] text-stone-700 hover:border-[#FF6B4A] hover:text-[#FF6B4A] transition">+ ฿50</button>
+              <button type="button" onclick="setAmount(100)" class="px-3 py-1 rounded-lg text-xs font-semibold bg-[#FAF8F5] border border-[#E7E2D9] text-stone-700 hover:border-[#FF6B4A] hover:text-[#FF6B4A] transition">+ ฿100</button>
+              <button type="button" onclick="setAmount(300)" class="px-3 py-1 rounded-lg text-xs font-semibold bg-[#FAF8F5] border border-[#E7E2D9] text-stone-700 hover:border-[#FF6B4A] hover:text-[#FF6B4A] transition">+ ฿300</button>
+              <button type="button" onclick="setAmount(500)" class="px-3 py-1 rounded-lg text-xs font-semibold bg-[#FAF8F5] border border-[#E7E2D9] text-stone-700 hover:border-[#FF6B4A] hover:text-[#FF6B4A] transition">+ ฿500</button>
+              <button type="button" onclick="setAmount(1000)" class="px-3 py-1 rounded-lg text-xs font-semibold bg-[#FAF8F5] border border-[#E7E2D9] text-stone-700 hover:border-[#FF6B4A] hover:text-[#FF6B4A] transition">+ ฿1,000</button>
+            </div>
+
+            <!-- Real-Time Top-up Preview Box (0% Fee - 100% Net Credit) -->
+            <div id="topup-fee-card" class="mt-3 p-3.5 rounded-2xl bg-[#FAF8F5] border border-[#E7E2D9] space-y-2 text-xs">
+              <div class="flex items-center justify-between pb-1.5 border-b border-[#E7E2D9]/70 text-[11px] font-bold text-stone-700">
+                <span class="flex items-center gap-1.5">
+                  <i class="fa-solid fa-calculator text-emerald-600"></i>
+                  <span>สรุปยอดเงินเข้ากระเป๋า (ฟรีค่าธรรมเนียม)</span>
+                </span>
+                <span class="text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200 font-semibold">
+                  ฟรีค่าธรรมเนียม 0%
+                </span>
+              </div>
+              <div class="grid grid-cols-3 gap-2 text-[11px]">
+                <div class="bg-white p-2.5 rounded-xl border border-[#E7E2D9]">
+                  <span class="text-stone-400 block text-[10px]">ยอดเงินที่แจ้งโอน</span>
+                  <span class="font-bold font-mono text-stone-800 text-xs" id="topup-gross-val">฿0.00</span>
+                </div>
+                <div class="bg-white p-2.5 rounded-xl border border-[#E7E2D9]">
+                  <span class="text-stone-400 block text-[10px]">ค่าธรรมเนียม</span>
+                  <span class="font-bold font-mono text-emerald-600 text-xs" id="topup-fee-val">฿0.00</span>
+                </div>
+                <div class="bg-white p-2.5 rounded-xl border border-[#E7E2D9]">
+                  <span class="text-stone-400 block text-[10px]">เงินเข้ากระเป๋าจริง</span>
+                  <span class="font-black font-mono text-emerald-600 text-xs" id="topup-net-val">฿0.00</span>
+                </div>
+              </div>
+              <p class="text-[10px] text-stone-500 leading-normal" id="topup-hint-text">
+                * เติมเงินฟรีค่าธรรมเนียม 0% เงินเข้ากระเป๋าเต็มจำนวน 100% ตามยอดที่คุณโอน
+              </p>
+            </div>
+          </div>
+
+          <!-- Payment Method Radio / Select (3 options) -->
+          <div>
+            <label class="block text-[11px] font-semibold text-stone-600 mb-1.5 uppercase tracking-wider">
+              ประเภทช่องทางที่โอน <span class="text-rose-500">*</span>
+            </label>
+            <div class="grid grid-cols-3 gap-2">
+              <label class="flex items-center gap-2 p-2.5 rounded-xl border border-[#E7E2D9] bg-[#FAF8F5] cursor-pointer hover:border-[#FF6B4A] transition" id="radio-label-qr">
+                <input type="radio" name="payment_method" value="พร้อมเพย์ (PromptPay QR)" checked onchange="switchChannel('qr')" class="text-purple-600 focus:ring-purple-600">
+                <span class="text-xs font-bold text-stone-800">พร้อมเพย์ QR</span>
+              </label>
+              <label class="flex items-center gap-2 p-2.5 rounded-xl border border-[#E7E2D9] bg-[#FAF8F5] cursor-pointer hover:border-[#FF6B4A] transition" id="radio-label-banking">
+                <input type="radio" name="payment_method" value="Banking (โอนผ่านเลขบัญชี)" onchange="switchChannel('banking')" class="text-sky-600 focus:ring-sky-600">
+                <span class="text-xs font-bold text-stone-800">Banking</span>
+              </label>
+              <label class="flex items-center gap-2 p-2.5 rounded-xl border border-[#E7E2D9] bg-[#FAF8F5] cursor-pointer hover:border-[#FF6B4A] transition" id="radio-label-truemoney">
+                <input type="radio" name="payment_method" value="TrueMoney Wallet" onchange="switchChannel('truemoney')" class="text-orange-500 focus:ring-orange-500">
+                <span class="text-xs font-bold text-stone-800">TrueMoney</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Dynamic Sender Bank or Phone / Transfer Time -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            
+            <!-- พร้อมเพย์: กำหนดเป็น พร้อมเพย์ อัตโนมัติ ไม่ต้องเลือกธนาคาร -->
+            <div id="field-promptpay-wrapper">
+              <label class="block text-[11px] font-semibold text-stone-600 mb-1.5 uppercase tracking-wider">
+                ข้อมูลผู้โอน (ช่องทาง)
+              </label>
+              <div class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-purple-50/70 border border-purple-200 text-purple-900 text-xs font-semibold">
+                <i class="fa-solid fa-qrcode text-purple-600"></i>
+                <span>พร้อมเพย์ (กำหนดอัตโนมัติ ไม่ต้องเลือก)</span>
+              </div>
+              <input type="hidden" id="sender_promptpay" name="sender_promptpay" value="พร้อมเพย์">
+            </div>
+
+            <!-- Banking: Dropdown ธนาคารแต่ละธนาคาร -->
+            <div id="field-bank-wrapper" class="hidden">
+              <label for="sender_bank" class="block text-[11px] font-semibold text-stone-600 mb-1.5 uppercase tracking-wider">
+                ธนาคารที่คุณใช้โอน <span class="text-rose-500">*</span>
+              </label>
+              <select id="sender_bank" name="sender_bank"
+                      class="w-full px-4 py-2.5 rounded-xl bg-[#FAF8F5] border border-[#E7E2D9] text-[#1C1917] text-sm focus:outline-none focus:bg-white focus:border-[#FF6B4A] focus:ring-2 focus:ring-[#FF6B4A]/10 transition font-medium">
+                <option value="" disabled selected>-- เลือกธนาคารที่คุณใช้โอน --</option>
+                <option value="ธนาคารกรุงเทพ (BBL)">• ธนาคารกรุงเทพ (BBL)</option>
+                <option value="ธนาคารกสิกรไทย (KBANK)">• ธนาคารกสิกรไทย (KBANK)</option>
+                <option value="ธนาคารกรุงไทย (KTB)">• ธนาคารกรุงไทย (KTB)</option>
+                <option value="ธนาคารไทยพาณิชย์ (SCB)">• ธนาคารไทยพาณิชย์ (SCB)</option>
+                <option value="ธนาคารทีเอ็มบีธนชาต (ttb)">• ธนาคารทีเอ็มบีธนชาต (ttb)</option>
+                <option value="ธนาคารกรุงศรีอยุธยา (BAY)">• ธนาคารกรุงศรีอยุธยา (BAY)</option>
+                <option value="ธนาคารเกียรตินาคินภัทร (KKP)">• ธนาคารเกียรตินาคินภัทร (KKP)</option>
+                <option value="ธนาคารออมสิน (GSB)">• ธนาคารออมสิน (GSB)</option>
+              </select>
+            </div>
+
+            <!-- TrueMoney: ช่องกรอกเบอร์โทรศัพท์ที่ใช้โอน (ซ่อนเริ่มต้น) -->
+            <div id="field-phone-wrapper" class="hidden">
+              <label for="sender_phone" class="block text-[11px] font-semibold text-stone-600 mb-1.5 uppercase tracking-wider">
+                เบอร์โทร TrueMoney ที่ใช้โอน <span class="text-rose-500">*</span>
+              </label>
+              <input type="tel" id="sender_phone" name="sender_phone" placeholder="เช่น 0812345678"
+                     class="w-full px-4 py-2.5 rounded-xl bg-[#FAF8F5] border border-[#E7E2D9] text-[#1C1917] text-sm focus:outline-none focus:bg-white focus:border-[#FF6B4A] focus:ring-2 focus:ring-[#FF6B4A]/10 transition font-mono">
+            </div>
+
+            <!-- วันและเวลาที่โอนเงิน -->
+            <div>
+              <label for="transfer_time" class="block text-[11px] font-semibold text-stone-600 mb-1.5 uppercase tracking-wider">
+                วันและเวลาที่โอนเงิน <span class="text-rose-500">*</span>
+              </label>
+              <div class="relative">
+                <input type="text" id="transfer_time" name="transfer_time" required placeholder="เช่น 13/10/2026 00:15"
+                       class="w-full px-4 py-2.5 rounded-xl bg-[#FAF8F5] border border-[#E7E2D9] text-[#1C1917] text-sm focus:outline-none focus:bg-white focus:border-[#FF6B4A] focus:ring-2 focus:ring-[#FF6B4A]/10 transition">
+                <button type="button" onclick="setCurrentTime()" title="ใส่วันเวลาปัจจุบัน"
+                        class="absolute right-2 top-2 px-2 py-1 rounded-lg text-[10px] font-bold bg-stone-200 hover:bg-stone-300 text-stone-700 transition">
+                  ตอนนี้
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Slip Upload Box -->
+          <div>
+            <label class="block text-[11px] font-semibold text-stone-600 mb-1.5 uppercase tracking-wider">
+              แนบภาพสลิปหลักฐานการโอน <span class="text-rose-500">*</span>
+            </label>
+            
+            <div class="relative border-2 border-dashed border-[#E7E2D9] hover:border-[#FF6B4A] rounded-2xl p-6 text-center bg-[#FAF8F5] transition cursor-pointer"
+                 onclick="document.getElementById('slip-input').click()">
+              <input type="file" id="slip-input" name="slip" accept="image/png, image/jpeg, image/jpg, image/webp" required class="hidden" onchange="previewSlip(event)">
+              
+              <div id="upload-placeholder" class="space-y-2">
+                <div class="w-12 h-12 mx-auto rounded-2xl bg-white border border-[#E7E2D9] flex items-center justify-center text-[#FF6B4A] shadow-xs">
+                  <i class="fa-solid fa-cloud-arrow-up text-xl"></i>
+                </div>
+                <p class="text-xs font-bold text-stone-700">คลิกเพื่ออัปโหลดภาพสลิป หรือลากไฟล์มาวางที่นี่</p>
+                <p class="text-[10px] text-stone-400">รองรับไฟล์ .JPG, .PNG, .WEBP (ขนาดไม่เกิน 10MB)</p>
+              </div>
+
+              <!-- Slip Preview Container (Initially Hidden) -->
+              <div id="preview-container" class="hidden flex flex-col items-center gap-2">
+                <img id="slip-preview" src="#" alt="ตัวอย่างสลิป" class="max-h-56 rounded-xl border border-[#E7E2D9] shadow-sm object-contain">
+                <span class="text-xs font-semibold text-emerald-600 flex items-center gap-1">
+                  <i class="fa-solid fa-circle-check"></i> เลือกภาพสลิปเรียบร้อย คลิกเพื่อเปลี่ยนภาพ
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Notice: Admin Verification Required -->
+          <div class="p-3.5 rounded-2xl bg-[#FAF8F5] border border-[#E7E2D9] flex items-center gap-3 text-xs text-stone-600">
+            <div class="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center text-sm flex-shrink-0">
+              <i class="fa-solid fa-shield-halved"></i>
+            </div>
+            <p class="leading-relaxed">
+              เมื่อกดส่งหลักฐาน ข้อมูลจะถูกส่งแจ้งเตือนไปยัง<strong>ผู้ดูแลระบบ (Admin)</strong> เพื่อตรวจสอบความถูกต้องของสลิป และจะยืนยันเพิ่มเงินเข้ากระเป๋าของคุณทันที
+            </p>
+          </div>
+
+          <!-- Submit Button -->
+          <div class="pt-1">
+            <button type="submit" 
+                    class="w-full py-3.5 px-4 rounded-xl font-bold text-sm text-white bg-[#FF6B4A] hover:bg-[#E85938] shadow-md shadow-[#FF6B4A]/25 transition flex items-center justify-center gap-2">
+              <i class="fa-solid fa-circle-check"></i>
+              <span>ยืนยันการแจ้งเติมเงินและส่งหลักฐาน</span>
+            </button>
+          </div>
+
+        </form>
+
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Bottom: User Top-up History -->
+  <div id="topup-history" class="w-full bg-white border border-[#E7E2D9] rounded-3xl p-6 sm:p-8 shadow-sm space-y-4">
+    <div class="flex items-center justify-between border-b border-[#E7E2D9] pb-4">
+      <div>
+        <h2 class="text-lg font-bold text-[#1C1917] flex items-center gap-2">
+          <i class="fa-solid fa-receipt text-emerald-600"></i>
+          <span>ประวัติการเติมเงิน & ใบเสร็จสลีป (Top-up Receipts)</span>
+        </h2>
+        <p class="text-xs text-stone-500 mt-0.5">รายการแจ้งเติมเงินเข้าสู่ระบบ พร้อมเปิดดูและดาวน์โหลดสลีปใบเสร็จ PDF ({{ topups|length }} รายการ)</p>
+      </div>
+      <a href="{{ url_for('withdraw') }}#withdraw-history" class="text-xs font-semibold text-[#FF6B4A] hover:underline flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#FAF8F5] border border-[#E7E2D9] hover:border-[#FF6B4A] transition">
+        <span>ดูประวัติการถอนเงิน</span>
+        <i class="fa-solid fa-arrow-right text-[10px]"></i>
+      </a>
+    </div>
+
+    {% if topups %}
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-[#E7E2D9] text-[11px] text-stone-400 font-semibold uppercase tracking-wider">
+              <th class="text-left py-3 px-3">วันเวลาแจ้ง</th>
+              <th class="text-left py-3 px-3">ช่องทาง</th>
+              <th class="text-left py-3 px-3">ยอดเงินโอน</th>
+              <th class="text-left py-3 px-3">ค่าธรรมเนียม (0%)</th>
+              <th class="text-left py-3 px-3">เข้ากระเป๋าจริง</th>
+              <th class="text-left py-3 px-3">ผู้โอน / เวลา</th>
+              <th class="text-left py-3 px-3">สลีป / ใบเสร็จ</th>
+              <th class="text-right py-3 px-3">สถานะ</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-[#E7E2D9]">
+            {% for item in topups %}
+            <tr class="hover:bg-[#FAF8F5] transition text-xs">
+              <td class="py-3 px-3 text-stone-500 font-mono">{{ item.created_at.strftime('%d/%m/%Y %H:%M') if item.created_at else '—' }}</td>
+              <td class="py-3 px-3 font-semibold text-stone-800">
+                {% if 'TrueMoney' in item.payment_method %}
+                  <span class="inline-flex items-center gap-1 text-orange-600"><i class="fa-solid fa-wallet"></i> TrueMoney</span>
+                {% elif 'Banking' in item.payment_method %}
+                  <span class="inline-flex items-center gap-1 text-sky-600"><i class="fa-solid fa-building-columns"></i> Banking</span>
+                {% else %}
+                  <span class="inline-flex items-center gap-1 text-purple-600"><i class="fa-solid fa-qrcode"></i> พร้อมเพย์</span>
+                {% endif %}
+              </td>
+              <td class="py-3 px-3 font-mono text-stone-700">฿{{ "%.2f"|format(item.amount) }}</td>
+              <td class="py-3 px-3 font-mono text-amber-600 font-medium">-฿{{ "%.2f"|format(item.fee) }}</td>
+              <td class="py-3 px-3 font-mono font-black text-emerald-600 text-sm">฿{{ "%.2f"|format(item.net_amount) }}</td>
+              <td class="py-3 px-3 font-medium text-stone-700">
+                <div class="space-y-0.5">
+                  {% if 'TrueMoney' in item.payment_method %}
+                    <span class="font-mono text-stone-600 text-[11px] block"><i class="fa-solid fa-phone text-[10px] text-stone-400 mr-1"></i>{{ item.sender_phone }}</span>
+                  {% elif 'Banking' in item.payment_method %}
+                    <span class="inline-flex items-center gap-1 text-sky-700 text-[11px]"><i class="fa-solid fa-building-columns text-[10px] text-sky-500"></i> {{ item.sender_phone }}</span>
+                  {% else %}
+                    <span class="inline-flex items-center gap-1 text-purple-700 text-[11px]"><i class="fa-solid fa-bolt text-[10px] text-purple-500"></i> พร้อมเพย์</span>
+                  {% endif %}
+                  <span class="text-[10px] text-stone-400 block font-mono">{{ item.transfer_time }}</span>
+                </div>
+              </td>
+              <td class="py-3 px-4">
+                {% if item.status == 'สำเร็จ' or current_user.is_admin %}
+                <div class="inline-flex items-center gap-1.5">
+                  <a href="{{ url_for('slip_topup', tx_id=item.id) }}"
+                     class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-[#FAF8F5] border border-[#E7E2D9] text-stone-700 hover:border-[#FF6B4A] hover:text-[#FF6B4A] transition"
+                     title="เปิดดูใบสลีป">
+                    <i class="fa-solid fa-receipt text-[10px]"></i>
+                    <span>ดูสลีป</span>
+                  </a>
+                  <a href="{{ url_for('slip_topup', tx_id=item.id) }}?download=1"
+                     class="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-bold bg-emerald-50 border border-emerald-200 text-emerald-700 hover:bg-emerald-100 transition"
+                     title="ดาวน์โหลดสลีปเป็น PDF">
+                    <i class="fa-solid fa-file-pdf text-[10px]"></i>
+                    <span>โหลด PDF</span>
+                  </a>
+                </div>
+                {% elif item.status == 'ปฏิเสธ' %}
+                  <span class="text-[11px] text-stone-400 font-medium italic">ไม่มีสลีป (ปฏิเสธ)</span>
+                {% else %}
+                  <span class="inline-flex items-center gap-1 text-[11px] text-amber-700 font-semibold bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200" title="ต้องรอให้แอดมินตรวจสอบและอนุมัติก่อน จึงจะมีสลีปยืนยัน">
+                    <i class="fa-solid fa-clock text-[10px]"></i>
+                    <span>รอแอดมินยืนยัน (ยังไม่มีสลีป)</span>
+                  </span>
+                {% endif %}
+              </td>
+              <td class="py-3 px-4 text-right">
+                {% if item.status == 'สำเร็จ' %}
+                  <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-200">
+                    <i class="fa-solid fa-circle-check text-[10px]"></i> สำเร็จ (เงินเข้าแล้ว)
+                  </span>
+                {% elif item.status == 'ปฏิเสธ' %}
+                  <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-50 text-rose-600 border border-rose-200">
+                    <i class="fa-solid fa-circle-xmark text-[10px]"></i> ไม่อนุมัติ / สลิปไม่ผ่าน
+                  </span>
+                {% else %}
+                  <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200 animate-pulse">
+                    <i class="fa-solid fa-clock text-[10px]"></i> รอแอดมินตรวจสอบและยืนยัน
+                  </span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="py-12 text-center text-stone-400 space-y-2">
+        <i class="fa-solid fa-receipt text-3xl text-stone-300"></i>
+        <p class="text-xs">ยังไม่มีประวัติการเติมเงิน</p>
+      </div>
+    {% endif %}
+  </div>
+
+</div>
+
+<!-- Client-side Scripts for Quick Actions -->
+<script>
+  function switchChannel(channel) {
+    const qrView = document.getElementById('channel-qr-view');
+    const bankingView = document.getElementById('channel-banking-view');
+    const truemoneyView = document.getElementById('channel-truemoney-view');
+
+    const btnQr = document.getElementById('tab-btn-qr');
+    const btnBanking = document.getElementById('tab-btn-banking');
+    const btnTruemoney = document.getElementById('tab-btn-truemoney');
+
+    const radios = document.getElementsByName('payment_method');
+
+    const promptpayWrapper = document.getElementById('field-promptpay-wrapper');
+    const bankWrapper = document.getElementById('field-bank-wrapper');
+    const phoneWrapper = document.getElementById('field-phone-wrapper');
+    const bankSelect = document.getElementById('sender_bank');
+    const phoneInput = document.getElementById('sender_phone');
+
+    const activeClass = 'py-2.5 px-2 rounded-xl transition text-center flex items-center justify-center gap-1 bg-white text-[#1C1917] shadow-xs';
+    const inactiveClass = 'py-2.5 px-2 rounded-xl transition text-center flex items-center justify-center gap-1 text-stone-500 hover:text-[#1C1917]';
+
+    if (channel === 'qr') {
+      qrView.classList.remove('hidden');
+      bankingView.classList.add('hidden');
+      truemoneyView.classList.add('hidden');
+
+      btnQr.className = activeClass;
+      btnBanking.className = inactiveClass;
+      btnTruemoney.className = inactiveClass;
+
+      if (radios.length > 0) radios[0].checked = true;
+
+      // พร้อมเพย์: กำหนดเป็นพร้อมเพย์ให้อัตโนมัติ ไม่ต้องเลือกธนาคาร
+      promptpayWrapper.classList.remove('hidden');
+      bankWrapper.classList.add('hidden');
+      phoneWrapper.classList.add('hidden');
+
+      bankSelect.required = false;
+      bankSelect.value = '';
+      phoneInput.required = false;
+      phoneInput.value = '';
+
+    } else if (channel === 'banking') {
+      qrView.classList.add('hidden');
+      bankingView.classList.remove('hidden');
+      truemoneyView.classList.add('hidden');
+
+      btnQr.className = inactiveClass;
+      btnBanking.className = activeClass;
+      btnTruemoney.className = inactiveClass;
+
+      if (radios.length > 1) radios[1].checked = true;
+
+      // Banking: เลือกธนาคารจาก Dropdown
+      promptpayWrapper.classList.add('hidden');
+      bankWrapper.classList.remove('hidden');
+      phoneWrapper.classList.add('hidden');
+
+      bankSelect.required = true;
+      phoneInput.required = false;
+      phoneInput.value = '';
+
+    } else if (channel === 'truemoney') {
+      qrView.classList.add('hidden');
+      bankingView.classList.add('hidden');
+      truemoneyView.classList.remove('hidden');
+
+      btnQr.className = inactiveClass;
+      btnBanking.className = inactiveClass;
+      btnTruemoney.className = activeClass;
+
+      if (radios.length > 2) radios[2].checked = true;
+
+      // TrueMoney: กรอกเบอร์โทรศัพท์
+      promptpayWrapper.classList.add('hidden');
+      bankWrapper.classList.add('hidden');
+      phoneWrapper.classList.remove('hidden');
+
+      bankSelect.required = false;
+      bankSelect.value = '';
+      phoneInput.required = true;
+    }
+  }
+
+  function calculateTopupFee(val) {
+    const amount = parseFloat(val) || 0;
+    const grossEl = document.getElementById('topup-gross-val');
+    const feeEl = document.getElementById('topup-fee-val');
+    const netEl = document.getElementById('topup-net-val');
+    const hintEl = document.getElementById('topup-hint-text');
+
+    grossEl.innerText = '฿' + amount.toFixed(2);
+    feeEl.innerText = '฿0.00 (ฟรี)';
+    netEl.innerText = '฿' + amount.toFixed(2);
+    if (amount > 0) {
+      hintEl.innerHTML = `* โอนเงิน <strong>฿${amount.toFixed(2)} บาท</strong> ฟรีค่าธรรมเนียม 0% ได้รับเงินเข้ากระเป๋าเต็มจำนวน <strong>฿${amount.toFixed(2)} บาท</strong> (100%)`;
+    } else {
+      hintEl.innerText = '* ระบบฟรีค่าธรรมเนียม 0% สำหรับการเติมเงิน เงินเข้ากระเป๋าเต็มจำนวน 100%';
+    }
+  }
+
+  function setAmount(val) {
+    document.getElementById('amount').value = val;
+    calculateTopupFee(val);
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    const amtInput = document.getElementById('amount');
+    if (amtInput && amtInput.value) {
+      calculateTopupFee(amtInput.value);
+    }
+    const timeInput = document.getElementById('transfer_time');
+    if (timeInput && !timeInput.value) {
+      setCurrentTime();
+    }
+  });
+
+  function setCurrentTime() {
+    const now = new Date();
+    const day = String(now.getDate()).padStart(2, '0');
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const year = now.getFullYear();
+    const hours = String(now.getHours()).padStart(2, '0');
+    const mins = String(now.getMinutes()).padStart(2, '0');
+    document.getElementById('transfer_time').value = `${day}/${month}/${year} ${hours}:${mins}`;
+  }
+
+  function previewSlip(event) {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        document.getElementById('slip-preview').src = e.target.result;
+        document.getElementById('upload-placeholder').classList.add('hidden');
+        document.getElementById('preview-container').classList.remove('hidden');
+      }
+      reader.readAsDataURL(file);
+    }
+  }
+
+  function copyBankAccount() {
+    const acc = "9190582233";
+    navigator.clipboard.writeText(acc).then(() => {
+      const btnText = document.getElementById('copy-bank-btn-text');
+      const oldText = btnText.innerText;
+      btnText.innerText = "✓ คัดลอกเลขบัญชี 919-0-582233 แล้ว!";
+      setTimeout(() => {
+        btnText.innerText = oldText;
+      }, 2000);
+    });
+  }
+
+  function copyTrueMoney() {
+    const phone = "0955609261";
+    navigator.clipboard.writeText(phone).then(() => {
+      const btnText = document.getElementById('copy-btn-text');
+      const oldText = btnText.innerText;
+      btnText.innerText = "✓ คัดลอกสำเร็จ!";
+      setTimeout(() => {
+        btnText.innerText = oldText;
+      }, 2000);
+    });
+  }
+</script>
+{% endblock %}

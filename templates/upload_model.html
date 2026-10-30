@@ -1,0 +1,320 @@
+{% extends "base.html" %}
+{% block title %}ลงขายโมเดล 3D | PrintVerse 3D{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+
+  <!-- Header Banner -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#E7E2D9] pb-6">
+    <div>
+      <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-white border border-[#E7E2D9] text-[11px] font-semibold tracking-wider text-stone-600 uppercase mb-2">
+        <span class="w-1.5 h-1.5 rounded-full bg-[#FF6B4A]"></span>
+        <span>Creator Studio & Marketplace</span>
+      </div>
+      <h1 class="text-2xl sm:text-3xl font-extrabold text-[#1C1917] tracking-tight">
+        ลงขายโมเดล 3D ของคุณ
+      </h1>
+      <p class="text-xs sm:text-sm text-stone-500 mt-1">
+        ตั้งชื่อสินค้า อัปโหลดรูปตัวอย่าง และกำหนดราคา เพื่อแบ่งปันหรือสร้างรายได้ในตลาด PrintVerse
+      </p>
+    </div>
+    <div class="flex items-center gap-3">
+      <a href="{{ url_for('my_models') }}" class="px-4 py-2.5 rounded-xl text-xs font-bold bg-white hover:bg-stone-50 text-stone-700 border border-[#E7E2D9] shadow-xs transition flex items-center gap-2">
+        <i class="fa-solid fa-folder-open text-[#FF6B4A]"></i>
+        <span>โมเดลของฉัน</span>
+      </a>
+      <a href="{{ url_for('index') }}" class="px-4 py-2.5 rounded-xl text-xs font-bold text-stone-500 hover:text-stone-800 transition">
+        ย้อนกลับตลาด
+      </a>
+    </div>
+  </div>
+
+  <!-- Moderation Notice Card -->
+  <div class="{% if current_user.is_admin %}bg-emerald-50/70 border-emerald-200 text-emerald-900{% else %}bg-amber-50/70 border-amber-200 text-amber-900{% endif %} border rounded-2xl p-4 sm:p-5 flex items-start gap-3.5 shadow-xs">
+    <div class="w-9 h-9 rounded-xl {% if current_user.is_admin %}bg-emerald-500 text-white{% else %}bg-amber-500 text-white{% endif %} flex items-center justify-center flex-shrink-0 text-base shadow-xs">
+      {% if current_user.is_admin %}
+        <i class="fa-solid fa-shield-halved"></i>
+      {% else %}
+        <i class="fa-solid fa-circle-info"></i>
+      {% endif %}
+    </div>
+    <div class="text-xs space-y-1">
+      {% if current_user.is_admin %}
+        <p class="font-bold text-sm text-emerald-900">โหมดผู้ดูแลระบบ (Admin Direct Publish)</p>
+        <p class="text-emerald-700">สินค้าที่คุณสร้างจะได้รับการอนุมัติทันที และแสดงผลบนหน้าตลาดกลางให้ผู้ใช้ทุกคนเห็น</p>
+      {% else %}
+        <p class="font-bold text-sm text-amber-900">กระบวนการตรวจสอบและอนุมัติสินค้า (Admin Approval Required)</p>
+        <p class="text-amber-800 leading-relaxed">
+          เมื่อคุณส่งข้อมูลแล้ว สินค้าจะอยู่ในสถานะ <strong>"รอการตรวจสอบ"</strong> โดยแอดมินจะตรวจดูรูปตัวอย่างและรายละเอียด หากผ่านเกณฑ์สินค้าจะถูกนำขึ้น <strong>หน้าตลาดกลาง</strong> ทันที โดยคุณสามารถติดตามสถานะได้ที่เมนู <strong>"โมเดลของฉัน"</strong>
+        </p>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Upload Form -->
+  <form method="POST" action="{{ url_for('upload_model') }}" enctype="multipart/form-data" class="bg-white border border-[#E7E2D9] rounded-3xl p-6 sm:p-10 shadow-sm space-y-8">
+    
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      
+      <!-- Left Column: Thumbnail & 3D File Upload (5 cols) -->
+      <div class="lg:col-span-5 space-y-6">
+        
+        <!-- Thumbnail Upload -->
+        <div>
+          <label class="block text-[11px] font-semibold text-stone-600 mb-2 uppercase tracking-wider">
+            รูปภาพตัวอย่างโมเดล <span class="text-rose-500">*</span>
+          </label>
+          <div class="relative border-2 border-dashed border-[#E7E2D9] hover:border-[#FF6B4A] rounded-2xl p-6 text-center bg-[#FAF8F5] transition cursor-pointer"
+               onclick="document.getElementById('thumbnail-input').click()">
+            <input type="file" id="thumbnail-input" name="thumbnail" accept="image/png, image/jpeg, image/jpg, image/webp" required class="hidden" onchange="previewThumbnail(event)">
+            
+            <div id="thumb-placeholder" class="space-y-3">
+              <div class="w-14 h-14 mx-auto rounded-2xl bg-white border border-[#E7E2D9] flex items-center justify-center text-[#FF6B4A] shadow-xs">
+                <i class="fa-regular fa-image text-2xl"></i>
+              </div>
+              <div>
+                <p class="text-xs font-bold text-stone-700">คลิกเพื่ออัปโหลดภาพตัวอย่างสินค้า</p>
+                <p class="text-[10px] text-stone-400 mt-0.5">รองรับ .JPG, .PNG, .WEBP (แนะนำภาพสัดส่วน 4:3 หรือ 1:1)</p>
+              </div>
+            </div>
+
+            <!-- Preview Container -->
+            <div id="thumb-preview-container" class="hidden flex flex-col items-center gap-2">
+              <img id="thumb-preview" src="#" alt="ภาพตัวอย่าง" class="max-h-56 rounded-xl border border-[#E7E2D9] shadow-sm object-contain">
+              <span class="text-xs font-semibold text-emerald-600 flex items-center gap-1">
+                <i class="fa-solid fa-circle-check"></i> เลือกรูปภาพแล้ว (คลิกเพื่อเปลี่ยน)
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3D Model File Upload (Optional) -->
+        <div>
+          <label class="block text-[11px] font-semibold text-stone-600 mb-2 uppercase tracking-wider">
+            ไฟล์โมเดล 3D สำหรับดาวน์โหลด
+          </label>
+          <div class="p-4 rounded-2xl bg-[#FAF8F5] border border-[#E7E2D9] space-y-2">
+            <input type="file" id="model_file" name="model_file" accept=".stl,.3mf,.step,.obj,.zip"
+                   class="block w-full text-xs text-stone-500 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-white file:text-[#FF6B4A] file:shadow-xs hover:file:bg-stone-50 cursor-pointer">
+            <p class="text-[10px] text-stone-400">รองรับไฟล์ .STL, .3MF, .STEP, .OBJ หรือ .ZIP ขนาดไม่เกิน 32MB</p>
+          </div>
+        </div>
+
+        <!-- 3D Printing Specs (Collapsible or Quick Grid) -->
+        <div class="p-5 rounded-2xl bg-[#FAF8F5] border border-[#E7E2D9] space-y-3">
+          <h3 class="text-xs font-bold text-stone-800 flex items-center gap-1.5">
+            <i class="fa-solid fa-sliders text-[#FF6B4A]"></i>
+            <span>พารามิเตอร์การพิมพ์ (Print Parameters)</span>
+          </h3>
+          <div class="grid grid-cols-2 gap-3 text-xs">
+            <div>
+              <label class="block text-[10px] font-semibold text-stone-500 mb-1">Layer Height</label>
+              <input type="text" name="layer_height" value="0.20 mm" placeholder="เช่น 0.16 mm"
+                     class="w-full px-3 py-2 rounded-xl bg-white border border-[#E7E2D9] text-xs font-medium focus:outline-none focus:border-[#FF6B4A]">
+            </div>
+            <div>
+              <label class="block text-[10px] font-semibold text-stone-500 mb-1">Infill (%)</label>
+              <input type="number" name="infill_percentage" value="20" min="0" max="100"
+                     class="w-full px-3 py-2 rounded-xl bg-white border border-[#E7E2D9] text-xs font-medium focus:outline-none focus:border-[#FF6B4A]">
+            </div>
+            <div>
+              <label class="block text-[10px] font-semibold text-stone-500 mb-1">ต้องใช้ Support ไหม?</label>
+              <select name="supports_required" class="w-full px-3 py-2 rounded-xl bg-white border border-[#E7E2D9] text-xs font-medium focus:outline-none focus:border-[#FF6B4A]">
+                <option value="no">ไม่ต้องใช้ (No)</option>
+                <option value="yes">ต้องใช้ (Yes)</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[10px] font-semibold text-stone-500 mb-1">ชนิดวัสดุแนะนำ</label>
+              <input type="text" name="material_type" value="PLA" placeholder="PLA / PETG"
+                     class="w-full px-3 py-2 rounded-xl bg-white border border-[#E7E2D9] text-xs font-medium focus:outline-none focus:border-[#FF6B4A]">
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Right Column: Product Details (7 cols) -->
+      <div class="lg:col-span-7 space-y-5">
+        
+        <!-- Product Title -->
+        <div>
+          <label for="title" class="block text-[11px] font-semibold text-stone-600 mb-1.5 uppercase tracking-wider">
+            ชื่อสินค้า / โมเดล 3D <span class="text-rose-500">*</span>
+          </label>
+          <input type="text" id="title" name="title" required placeholder="เช่น Articulated Dragon Print-in-Place"
+                 class="w-full px-4 py-3 rounded-xl bg-[#FAF8F5] border border-[#E7E2D9] text-[#1C1917] font-semibold text-sm focus:outline-none focus:bg-white focus:border-[#FF6B4A] focus:ring-2 focus:ring-[#FF6B4A]/10 transition">
+        </div>
+
+        <!-- Category & Format -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label for="category" class="block text-[11px] font-semibold text-stone-600 mb-1.5 uppercase tracking-wider">
+              หมวดหมู่สินค้า <span class="text-rose-500">*</span>
+            </label>
+            <select id="category" name="category" required
+                    class="w-full px-4 py-3 rounded-xl bg-[#FAF8F5] border border-[#E7E2D9] text-[#1C1917] text-sm font-medium focus:outline-none focus:bg-white focus:border-[#FF6B4A] transition">
+              <option value="Gadgets & Tools">Gadgets & Tools</option>
+              <option value="Art & Figures">Art & Figures</option>
+              <option value="Mechanical & Toys">Mechanical & Toys</option>
+              <option value="Home & Lighting">Home & Lighting</option>
+              <option value="Everyday Carry">Everyday Carry</option>
+              <option value="Tools & Workshop">Tools & Workshop</option>
+              <option value="Fashion & Wearable">Fashion & Wearable</option>
+              <option value="Miniatures & Gaming">Miniatures & Gaming</option>
+              <option value="อื่นๆ">อื่นๆ</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="primary_format" class="block text-[11px] font-semibold text-stone-600 mb-1.5 uppercase tracking-wider">
+              รูปแบบไฟล์หลัก <span class="text-rose-500">*</span>
+            </label>
+            <select id="primary_format" name="primary_format" required
+                    class="w-full px-4 py-3 rounded-xl bg-[#FAF8F5] border border-[#E7E2D9] text-[#1C1917] text-sm font-medium focus:outline-none focus:bg-white focus:border-[#FF6B4A] transition font-mono">
+              <option value="STL">STL (.stl)</option>
+              <option value="3MF">3MF (.3mf)</option>
+              <option value="STEP">STEP (.step)</option>
+              <option value="OBJ">OBJ (.obj)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Pricing Section with Live VAT 7% Calculator -->
+        <div class="space-y-2">
+          <div class="flex items-center justify-between">
+            <label for="price" class="block text-[11px] font-semibold text-stone-600 uppercase tracking-wider">
+              ราคาจำหน่าย (บาท - รวม VAT 7% แล้ว) <span class="text-rose-500">*</span>
+            </label>
+            <span class="text-[10px] font-bold text-stone-600 bg-stone-100 px-2 py-0.5 rounded-md border border-[#E7E2D9]">
+              ภาษีมูลค่าเพิ่ม VAT 7%
+            </span>
+          </div>
+
+          <div class="relative">
+            <span class="absolute left-4 top-3 text-stone-400 font-bold text-sm">฿</span>
+            <input type="number" id="price" name="price" min="0" step="0.01" value="0.00" required oninput="calculateVat(this.value)"
+                   class="w-full pl-9 pr-4 py-3 rounded-xl bg-[#FAF8F5] border border-[#E7E2D9] text-[#1C1917] font-bold text-base focus:outline-none focus:bg-white focus:border-[#FF6B4A] focus:ring-2 focus:ring-[#FF6B4A]/10 transition">
+          </div>
+
+          <!-- Quick Select Buttons -->
+          <div class="flex items-center gap-2 pt-1 flex-wrap">
+            <button type="button" onclick="setPriceWithVat(0)" class="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-100 transition">แจกฟรี (฿0)</button>
+            <button type="button" onclick="setPriceWithVat(35)" class="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-[#FAF8F5] text-stone-700 border border-[#E7E2D9] hover:border-[#FF6B4A] transition">฿35</button>
+            <button type="button" onclick="setPriceWithVat(75)" class="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-[#FAF8F5] text-stone-700 border border-[#E7E2D9] hover:border-[#FF6B4A] transition">฿75</button>
+            <button type="button" onclick="setPriceWithVat(120)" class="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-[#FAF8F5] text-stone-700 border border-[#E7E2D9] hover:border-[#FF6B4A] transition">฿120</button>
+            <button type="button" onclick="setPriceWithVat(199)" class="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-[#FAF8F5] text-stone-700 border border-[#E7E2D9] hover:border-[#FF6B4A] transition">฿199</button>
+            <button type="button" onclick="setPriceWithVat(299)" class="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-[#FAF8F5] text-stone-700 border border-[#E7E2D9] hover:border-[#FF6B4A] transition">฿299</button>
+          </div>
+
+          <!-- Real-Time VAT & Income Breakdown Card -->
+          <div id="vat-breakdown-card" class="mt-3 p-3.5 rounded-2xl bg-[#FAF8F5] border border-[#E7E2D9] space-y-2.5 text-xs">
+            <div class="flex items-center justify-between pb-1.5 border-b border-[#E7E2D9]/70 text-[11px] font-bold text-stone-700">
+              <span class="flex items-center gap-1.5">
+                <i class="fa-solid fa-calculator text-[#FF6B4A]"></i>
+                <span>สรุปรายละเอียดราคาและภาษี (VAT 7%)</span>
+              </span>
+              <span class="text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200 font-semibold">
+                รวมภาษี 7% แล้ว
+              </span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-[11px]">
+              <div class="bg-white p-2.5 rounded-xl border border-[#E7E2D9]">
+                <span class="text-stone-400 block text-[10px]">ราคาก่อนภาษี (Net)</span>
+                <span class="font-bold font-mono text-stone-800 text-xs" id="vat-net-price">฿0.00</span>
+              </div>
+              <div class="bg-white p-2.5 rounded-xl border border-[#E7E2D9]">
+                <span class="text-stone-400 block text-[10px]">ภาษีมูลค่าเพิ่ม (VAT 7%)</span>
+                <span class="font-bold font-mono text-purple-600 text-xs" id="vat-amount">฿0.00</span>
+              </div>
+              <div class="bg-white p-2.5 rounded-xl border border-[#E7E2D9]">
+                <span class="text-stone-400 block text-[10px]">รายได้เข้ากระเป๋าคุณ</span>
+                <span class="font-bold font-mono text-emerald-600 text-xs" id="vat-seller-income">฿0.00</span>
+              </div>
+            </div>
+
+            <p class="text-[10px] text-stone-500 leading-normal" id="vat-hint-text">
+              * โมเดลนี้แจกฟรี ไม่มีค่าธรรมเนียมและได้รับการยกเว้นภาษีมูลค่าเพิ่ม
+            </p>
+          </div>
+        </div>
+
+        <!-- Description -->
+        <div>
+          <label for="description" class="block text-[11px] font-semibold text-stone-600 mb-1.5 uppercase tracking-wider">
+            รายละเอียดสินค้าและคำแนะนำการพิมพ์ <span class="text-rose-500">*</span>
+          </label>
+          <textarea id="description" name="description" rows="5" required
+                    placeholder="อธิบายจุดเด่นของโมเดล ขนาดชิ้นงาน แนะนำชนิดเส้นพลาสติก หรือขั้นตอนการประกอบ..."
+                    class="w-full px-4 py-3 rounded-xl bg-[#FAF8F5] border border-[#E7E2D9] text-[#1C1917] text-sm focus:outline-none focus:bg-white focus:border-[#FF6B4A] focus:ring-2 focus:ring-[#FF6B4A]/10 transition leading-relaxed"></textarea>
+        </div>
+
+        <!-- Submit Button -->
+        <div class="pt-4 border-t border-[#E7E2D9]">
+          <button type="submit" 
+                  class="w-full py-4 px-6 rounded-2xl font-bold text-sm text-white bg-[#FF6B4A] hover:bg-[#E85938] shadow-md shadow-[#FF6B4A]/25 transition flex items-center justify-center gap-2 group">
+            <i class="fa-solid fa-cloud-arrow-up group-hover:scale-110 transition"></i>
+            <span>{% if current_user.is_admin %}เผยแพร่สินค้าเข้าสู่ตลาดกลางทันที{% else %}ส่งสินค้าเพื่อรอการตรวจสอบ (Submit for Approval){% endif %}</span>
+          </button>
+          <p class="text-[11px] text-stone-400 text-center mt-2">
+            * เมื่อคลิกส่งสินค้า ข้อมูลจะถูกบันทึกเข้าสู่ระบบฐานข้อมูลอย่างปลอดภัย
+          </p>
+        </div>
+
+      </div>
+
+    </div>
+
+  </form>
+
+</div>
+
+<script>
+  function previewThumbnail(event) {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        document.getElementById('thumb-preview').src = e.target.result;
+        document.getElementById('thumb-placeholder').classList.add('hidden');
+        document.getElementById('thumb-preview-container').classList.remove('hidden');
+      }
+      reader.readAsDataURL(file);
+    }
+  }
+
+  function setPriceWithVat(val) {
+    document.getElementById('price').value = parseFloat(val).toFixed(2);
+    calculateVat(val);
+  }
+
+  function calculateVat(val) {
+    const price = parseFloat(val) || 0;
+    const netEl = document.getElementById('vat-net-price');
+    const vatEl = document.getElementById('vat-amount');
+    const incomeEl = document.getElementById('vat-seller-income');
+    const hintEl = document.getElementById('vat-hint-text');
+
+    if (price <= 0) {
+      netEl.innerText = '฿0.00';
+      vatEl.innerText = '฿0.00';
+      incomeEl.innerText = '฿0.00';
+      hintEl.innerText = '* โมเดลนี้แจกฟรี ไม่มีค่าธรรมเนียมและได้รับการยกเว้นภาษีมูลค่าเพิ่ม';
+      return;
+    }
+
+    const netPrice = price / 1.07;
+    const vat = price - netPrice;
+
+    netEl.innerText = '฿' + netPrice.toFixed(2);
+    vatEl.innerText = '฿' + vat.toFixed(2);
+    incomeEl.innerText = '฿' + price.toFixed(2);
+    hintEl.innerHTML = `* ราคาสุทธิ <strong>฿${price.toFixed(2)} บาท</strong> (แยกเป็นค่าโมเดล ฿${netPrice.toFixed(2)} + ภาษีมูลค่าเพิ่ม VAT 7% ฿${vat.toFixed(2)}) ระบบจะโอนเงินรายได้ ฿${price.toFixed(2)} บาทเข้า Wallet ของคุณเมื่อมีผู้ซื้อ`;
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    calculateVat(document.getElementById('price').value);
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,323 @@
+{% extends "base.html" %}
+{% block title %}คลังโมเดลของฉัน | PrintVerse 3D{% endblock %}
+
+{% block content %}
+<div class="w-full flex-1 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 py-12 sm:py-16 space-y-12">
+
+  <!-- Profile & Wallet Header Card -->
+  <div class="w-full bg-white border border-[#E7E2D9] rounded-3xl p-8 sm:p-10 shadow-sm">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-8">
+      
+      <!-- User Info -->
+      <div class="flex items-center space-x-5">
+        {% if user.avatar_url %}
+          <img src="{{ user.avatar_url }}" alt="{{ user.username }}" class="w-16 h-16 rounded-2xl object-cover border-2 border-[#E7E2D9] shadow-xs">
+        {% else %}
+          <div class="w-16 h-16 rounded-2xl bg-[#FAF8F5] border border-[#E7E2D9] flex items-center justify-center text-[#FF6B4A] text-2xl font-bold shadow-xs">
+            {{ user.username[0]|upper }}
+          </div>
+        {% endif %}
+        <div>
+          <div class="flex items-center space-x-3">
+            <h1 class="text-2xl font-extrabold text-[#1C1917] tracking-tight">{{ user.username }}</h1>
+            <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#FAF8F5] text-stone-700 border border-[#E7E2D9]">
+              {{ user.maker_badge }}
+            </span>
+          </div>
+          <p class="text-xs text-stone-500 mt-1.5 flex items-center gap-2">
+            <span>{{ user.email }}</span>
+            {% if user.phone_number %}
+              <span class="text-stone-300">•</span>
+              <span>{{ user.phone_number }}</span>
+            {% endif %}
+          </p>
+          <div class="mt-2.5">
+            <a href="{{ url_for('profile') }}" class="inline-flex items-center text-xs font-semibold text-stone-600 hover:text-[#FF6B4A] transition">
+              <i class="fa-solid fa-gear mr-1.5 text-stone-400"></i>
+              <span>จัดการโปรไฟล์และเปลี่ยนรหัสผ่าน</span>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Wallet & Topup / Transactions Buttons -->
+      <div class="flex items-center space-x-6">
+        <div class="text-right sm:pr-8 sm:border-r sm:border-[#E7E2D9]">
+          <span class="block text-[11px] uppercase tracking-wider text-stone-400 font-semibold">ยอดเงินคงเหลือ</span>
+          <span class="text-3xl font-extrabold text-[#1C1917]">฿{{ "%.2f"|format(user.wallet_balance) }}</span>
+        </div>
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+          <a href="{{ url_for('topup') }}" class="px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-[#FF6B4A] hover:bg-[#E85938] shadow-sm shadow-[#FF6B4A]/25 transition inline-flex items-center justify-center gap-1.5">
+            <i class="fa-solid fa-wallet"></i>
+            <span>เติมเงิน</span>
+          </a>
+          <a href="{{ url_for('wallet_transactions') }}" class="px-4 py-2.5 rounded-xl text-xs font-bold text-stone-700 bg-[#FAF8F5] border border-[#E7E2D9] hover:border-[#FF6B4A] hover:text-[#FF6B4A] transition inline-flex items-center justify-center gap-1.5 shadow-xs" title="ดูประวัติการทำรายการของบัญชี / สลีปทั้งหมด">
+            <i class="fa-solid fa-receipt text-purple-600"></i>
+            <span>ประวัติการทำรายการ</span>
+          </a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Purchased Models Section (Gallery Style) -->
+  <div class="space-y-6">
+    <div class="flex items-center justify-between border-b border-[#E7E2D9] pb-4">
+      <div>
+        <h2 class="text-xl font-bold text-[#1C1917] tracking-tight">โมเดลในคลังของฉัน</h2>
+        <p class="text-xs text-stone-500 mt-1">รายการไฟล์ 3D ทั้งหมดที่คุณซื้อและดาวน์โหลดแล้ว ({{ my_purchases|length }} รายการ)</p>
+      </div>
+      <a href="{{ url_for('index') }}" class="text-xs font-semibold text-[#FF6B4A] hover:underline transition">
+        + ค้นหาและซื้อโมเดลเพิ่ม
+      </a>
+    </div>
+
+    {% if my_purchases %}
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {% for purchase in my_purchases %}
+          {% set model = purchase.model %}
+          <div class="bg-white border border-[#E7E2D9] rounded-2xl overflow-hidden hover:border-[#FF6B4A]/60 shadow-xs hover:shadow-md transition-all duration-300 flex flex-col justify-between">
+            <div>
+              <!-- Card Preview Thumbnail (Clickable) -->
+              <a href="{{ url_for('model_detail', model_id=model.id) }}" class="h-44 bg-[#FAF8F5] border-b border-[#E7E2D9] flex items-center justify-center relative overflow-hidden p-2 block group/thumb">
+                {% if model.thumbnail_url %}
+                  <img src="{{ model.thumbnail_url }}" alt="{{ model.title }}" class="w-full h-full object-contain group-hover/thumb:scale-105 transition duration-300">
+                {% else %}
+                  <div class="w-12 h-12 rounded-xl bg-white border border-[#E7E2D9] flex items-center justify-center text-stone-400 shadow-xs">
+                    <i class="fa-solid fa-cube text-lg text-[#FF6B4A]"></i>
+                  </div>
+                {% endif %}
+
+                <div class="absolute top-3 left-3 z-10">
+                  <span class="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-white/95 text-stone-800 border border-[#E7E2D9] shadow-xs">
+                    .{{ model.primary_format }}
+                  </span>
+                </div>
+                <div class="absolute top-3 right-3 z-10">
+                  <span class="px-2 py-0.5 rounded text-[10px] font-mono font-semibold text-white bg-stone-900/70">
+                    {{ model.file_size_mb }} MB
+                  </span>
+                </div>
+              </a>
+
+              <!-- Body -->
+              <div class="p-5 space-y-2">
+                <h3 class="font-bold text-[#1C1917] text-base truncate hover:text-[#FF6B4A] transition">
+                  <a href="{{ url_for('model_detail', model_id=model.id) }}" title="{{ model.title }}">
+                    {{ model.title }}
+                  </a>
+                </h3>
+                <p class="text-xs text-stone-500 line-clamp-1">{{ model.category }}</p>
+
+                {% if model.print_setting %}
+                  <div class="mt-3 text-[10px] text-stone-600 bg-[#FAF8F5] p-2 rounded-lg border border-[#E7E2D9] flex items-center gap-2">
+                    <span>Layer: {{ model.print_setting.layer_height }}</span>
+                    <span class="text-stone-300">•</span>
+                    <span>Infill: {{ model.print_setting.infill_percentage }}%</span>
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+
+            <!-- Footer: Download Action -->
+            <div class="p-5 pt-0">
+              <div class="pt-3 border-t border-[#E7E2D9] flex items-center justify-between">
+                <span class="text-[11px] text-stone-400">
+                  {{ purchase.purchased_at.strftime('%d/%m/%Y') }}
+                </span>
+                <a href="{{ url_for('download_model_file', model_id=model.id) }}" 
+                   class="inline-flex items-center space-x-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-[#FF6B4A] hover:bg-[#E85938] shadow-xs shadow-[#FF6B4A]/20 transition group">
+                  <i class="fa-solid fa-download text-[10px] group-hover:translate-y-0.5 transition-transform"></i>
+                  <span>ดาวน์โหลดไฟล์</span>
+                </a>
+              </div>
+            </div>
+
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="text-center py-28 bg-white border border-[#E7E2D9] rounded-3xl p-8 space-y-4 shadow-sm">
+        <div class="w-14 h-14 mx-auto rounded-2xl bg-[#F5F2EB] border border-[#E7E2D9] flex items-center justify-center text-stone-400">
+          <i class="fa-solid fa-cloud-arrow-down text-xl"></i>
+        </div>
+        <h3 class="text-lg font-bold text-[#1C1917]">ยังไม่มีโมเดลในคลังของคุณ</h3>
+        <p class="text-xs text-stone-500 max-w-sm mx-auto">
+          ไปที่ตลาดโมเดลเพื่อเลือกดูและสั่งซื้อไฟล์ 3D ที่คุณชื่นชอบได้ทันที
+        </p>
+        <div class="pt-2">
+          <a href="{{ url_for('index') }}" class="inline-flex items-center px-5 py-2.5 rounded-xl bg-[#FF6B4A] hover:bg-[#E85938] text-white text-xs font-bold shadow-sm shadow-[#FF6B4A]/25 transition">
+            ไปเลือกดูโมเดลในตลาด
+          </a>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+
+</div>
+
+{% if new_purchase %}
+  <!-- Order Slip Modal (Shows immediately after purchase confirmation) -->
+  <div id="new-purchase-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto animate-fade-in" onclick="handleBackdropClick(event)">
+    <div class="bg-white rounded-3xl max-w-lg w-full border border-[#E7E2D9] shadow-2xl overflow-hidden my-8 relative animate-scale-up" onclick="event.stopPropagation()">
+      
+      <!-- Big [X] Close Button at Top-Right -->
+      <button type="button" onclick="closeOrderSlipModal()" 
+              class="absolute top-4 right-4 z-30 w-10 h-10 rounded-full bg-stone-100/90 hover:bg-stone-200 text-stone-600 hover:text-stone-900 flex items-center justify-center text-lg font-bold transition shadow-sm focus:outline-none cursor-pointer"
+              title="ปิดสลีป [X]">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+
+      <!-- Slip Header Banner -->
+      <div class="bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 p-6 text-white text-center relative pr-14">
+        <div class="w-14 h-14 mx-auto rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-2xl mb-2.5 shadow-inner">
+          <i class="fa-solid fa-circle-check text-white"></i>
+        </div>
+        <h3 class="text-xl font-black tracking-tight">สั่งซื้อโมเดลสำเร็จ!</h3>
+        <p class="text-xs text-white/90 mt-0.5">ระบบได้บันทึกคำสั่งซื้อและออกสลีปใบเสร็จเรียบร้อยแล้ว</p>
+      </div>
+
+      <!-- Slip Details Body -->
+      <div class="p-6 sm:p-7 space-y-5 bg-white">
+        
+        <!-- Brand & Receipt Meta Header -->
+        <div class="flex items-start justify-between border-b border-[#E7E2D9] pb-4">
+          <div class="space-y-0.5">
+            <div class="flex items-center gap-1.5">
+              <span class="font-black text-sm tracking-tight text-[#1C1917]">PrintVerse<span class="text-[#FF6B4A]">.3D</span></span>
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">E-Receipt</span>
+            </div>
+            <p class="text-[10px] text-stone-400">ใบเสร็จรับเงิน / สลีปคำสั่งซื้ออิเล็กทรอนิกส์</p>
+          </div>
+          <div class="text-right">
+            <span class="font-mono text-xs font-bold text-stone-800 bg-[#FAF8F5] px-2.5 py-1 rounded-lg border border-[#E7E2D9] inline-block">
+              #PV-ORD-{{ "%04d"|format(new_purchase.id) }}
+            </span>
+            <p class="text-[10px] text-stone-400 mt-1 font-mono">
+              {{ new_purchase.purchased_at.strftime('%d/%m/%Y %H:%M:%S') }}
+            </p>
+          </div>
+        </div>
+
+        <!-- Purchased Model Preview Card -->
+        <div class="flex items-center gap-4 p-3.5 bg-[#FAF8F5] rounded-2xl border border-[#E7E2D9]">
+          {% if new_purchase.model and new_purchase.model.thumbnail_url %}
+            <img src="{{ new_purchase.model.thumbnail_url }}" alt="{{ new_purchase.model.title }}" class="w-16 h-16 object-contain rounded-xl bg-white border border-[#E7E2D9] p-1 flex-shrink-0">
+          {% else %}
+            <div class="w-16 h-16 rounded-xl bg-white border border-[#E7E2D9] flex items-center justify-center text-stone-400 flex-shrink-0">
+              <i class="fa-solid fa-cube text-xl text-[#FF6B4A]"></i>
+            </div>
+          {% endif %}
+          <div class="flex-1 min-w-0">
+            <h4 class="font-bold text-sm text-[#1C1917] truncate">{{ new_purchase.model.title if new_purchase.model else 'โมเดล 3 มิติ' }}</h4>
+            <p class="text-[11px] text-stone-500 mt-0.5">
+              หมวดหมู่: {{ new_purchase.model.category if new_purchase.model else '3D Design' }}
+              {% if new_purchase.model and new_purchase.model.primary_format %}
+                • .{{ new_purchase.model.primary_format }}
+              {% endif %}
+            </p>
+            <p class="text-[10px] text-stone-400 mt-0.5 flex items-center gap-1">
+              <i class="fa-solid fa-user text-[9px] text-stone-400"></i>
+              <span>ผู้สร้าง: {{ new_purchase.seller.username if new_purchase.seller else 'PrintVerse' }}</span>
+            </p>
+          </div>
+        </div>
+
+        <!-- Order Breakdown & Tax Summary -->
+        <div class="space-y-2 text-xs border-y border-[#E7E2D9] py-3.5">
+          <div class="flex items-center justify-between text-stone-500">
+            <span>ผู้สั่งซื้อ (Customer)</span>
+            <span class="font-semibold text-stone-800">{{ user.username }}</span>
+          </div>
+          <div class="flex items-center justify-between text-stone-500">
+            <span>ช่องทางการชำระเงิน</span>
+            <span class="font-semibold text-stone-800">PrintVerse Studio Wallet (ตัดยอดกระเป๋า)</span>
+          </div>
+          <div class="flex items-center justify-between text-stone-500 pt-1 border-t border-dashed border-[#E7E2D9]">
+            <span>มูลค่าสินค้าก่อนภาษี (Base Price)</span>
+            <span class="font-mono text-stone-700 font-semibold">฿{{ "%.2f"|format(new_purchase.price_paid / 1.07) }}</span>
+          </div>
+          <div class="flex items-center justify-between text-stone-500">
+            <span class="flex items-center gap-1">
+              <span>ภาษีมูลค่าเพิ่ม (VAT 7%)</span>
+              <span class="text-[9px] px-1 py-0.2 rounded bg-purple-100 text-purple-700 font-bold">7%</span>
+            </span>
+            <span class="font-mono text-purple-700 font-bold">฿{{ "%.2f"|format(new_purchase.price_paid - (new_purchase.price_paid / 1.07)) }}</span>
+          </div>
+          <div class="flex items-center justify-between text-stone-900 font-bold pt-2 border-t border-[#E7E2D9] text-sm">
+            <div>
+              <span>ยอดรวมชำระสุทธิ (Total Amount)</span>
+              <span class="block text-[10px] font-normal text-purple-700">ราคารวมภาษีมูลค่าเพิ่ม (VAT 7%) เรียบร้อยแล้ว</span>
+            </div>
+            <span class="font-mono text-xl font-black text-[#FF6B4A]">฿{{ "%.2f"|format(new_purchase.price_paid) }}</span>
+          </div>
+        </div>
+
+        <!-- Trust Seal -->
+        <div class="flex items-center justify-between text-[10px] text-stone-400">
+          <div class="flex items-center gap-1.5">
+            <i class="fa-solid fa-shield-halved text-emerald-600"></i>
+            <span>Verified E-Receipt • ชำระเงินเรียบร้อยแล้ว</span>
+          </div>
+          <span class="font-mono font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+            สถานะ: สำเร็จ
+          </span>
+        </div>
+
+      </div>
+
+      <!-- Footer Action Buttons -->
+      <div class="bg-[#FAF8F5] px-6 py-4 border-t border-[#E7E2D9] flex flex-col sm:flex-row items-center justify-between gap-3">
+        <a href="{{ url_for('wallet_transactions') }}" 
+           class="text-xs font-semibold text-purple-700 hover:text-purple-900 hover:underline flex items-center gap-1.5">
+          <i class="fa-solid fa-receipt text-[11px]"></i>
+          <span>ดูในประวัติการทำรายการของบัญชี</span>
+        </a>
+
+        <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+          <a href="{{ url_for('slip_order', purchase_id=new_purchase.id) }}?download=1" target="_blank"
+             class="px-3.5 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition flex items-center gap-1.5 shadow-xs">
+            <i class="fa-solid fa-file-pdf"></i>
+            <span>ดาวน์โหลด PDF</span>
+          </a>
+          
+          <button type="button" onclick="closeOrderSlipModal()" 
+                  class="px-4 py-2 rounded-xl text-xs font-bold text-stone-700 bg-white border border-[#E7E2D9] hover:bg-stone-100 transition shadow-xs flex items-center gap-1 cursor-pointer">
+            <i class="fa-solid fa-xmark"></i>
+            <span>ปิด [X]</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+{% endif %}
+
+<script>
+  function closeOrderSlipModal() {
+    const modal = document.getElementById('new-purchase-modal');
+    if (modal) {
+      modal.classList.add('hidden');
+      // เคลียร์ query parameter ?new_purchase_id ออกจาก URL เพื่อไม่ให้เด้งซ้ำเวลารีเฟรช
+      const url = new URL(window.location.href);
+      if (url.searchParams.has('new_purchase_id')) {
+        url.searchParams.delete('new_purchase_id');
+        window.history.replaceState({}, document.title, url.pathname + (url.search ? url.search : ''));
+      }
+    }
+  }
+
+  function handleBackdropClick(event) {
+    if (event.target.id === 'new-purchase-modal') {
+      closeOrderSlipModal();
+    }
+  }
+
+  document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+      closeOrderSlipModal();
+    }
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,1139 @@
+{% extends "base.html" %}
+{% block title %}{{ t('profile_title') }} | PrintVerse 3D{% endblock %}
+
+{% block content %}
+<div class="w-full flex-1 max-w-5xl mx-auto px-6 sm:px-10 lg:px-16 py-12 sm:py-16 space-y-10">
+
+  <!-- Profile Header with Wallet -->
+  <div class="w-full bg-white border border-[#E7E2D9] rounded-3xl p-8 sm:p-10 shadow-sm">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-8">
+      
+      <!-- Avatar & Basic Info -->
+      <div class="flex items-center space-x-5">
+        <div class="relative group">
+          {% if user.avatar_url %}
+            <img src="{{ user.avatar_url }}" alt="{{ user.username }}" class="w-20 h-20 rounded-2xl object-cover border-2 border-[#E7E2D9] shadow-xs">
+          {% else %}
+            <div class="w-20 h-20 rounded-2xl bg-[#FAF8F5] border-2 border-[#E7E2D9] flex items-center justify-center text-[#FF6B4A] text-3xl font-extrabold shadow-xs">
+              {{ user.username[0]|upper }}
+            </div>
+          {% endif %}
+          <span class="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-emerald-500 border-2 border-white flex items-center justify-center" title="Online">
+            <i class="fa-solid fa-check text-[9px] text-white"></i>
+          </span>
+        </div>
+        <div>
+          <div class="flex items-center space-x-3">
+            <h1 class="text-2xl font-extrabold text-[#1C1917] tracking-tight">{{ user.username }}</h1>
+            <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#FAF8F5] text-stone-700 border border-[#E7E2D9]">
+              {{ user.maker_badge or 'Member' }}
+            </span>
+          </div>
+          <p class="text-xs text-stone-500 mt-1 flex flex-wrap items-center gap-2">
+            <span><i class="fa-solid fa-envelope mr-1 text-stone-400"></i>{{ user.email }}</span>
+            {% if user.phone_number %}
+              <span class="text-stone-300">•</span>
+              <span><i class="fa-solid fa-phone mr-1 text-stone-400"></i>{{ user.phone_number }}</span>
+            {% endif %}
+          </p>
+          {% if user.printer_setup %}
+            <p class="text-[11px] text-stone-400 mt-1">
+              <i class="fa-solid fa-print mr-1 text-stone-400"></i>{{ user.printer_setup }}
+            </p>
+          {% endif %}
+          {% if user.address %}
+            <p class="text-xs text-stone-500 mt-1.5 flex items-start gap-1.5 bg-[#FAF8F5] px-3 py-1.5 rounded-xl border border-[#E7E2D9] max-w-md">
+              <i class="fa-solid fa-location-dot mt-0.5 text-[#FF6B4A] text-xs"></i>
+              <span class="line-clamp-2 text-[11px] font-medium leading-relaxed">{{ user.address }}</span>
+            </p>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Wallet & Top-up -->
+      <div class="flex items-center space-x-6">
+        <div class="text-right sm:pr-8 sm:border-r sm:border-[#E7E2D9]">
+          <span class="block text-[11px] uppercase tracking-wider text-stone-400 font-semibold">{{ t('nav_balance') }}</span>
+          <span class="text-3xl font-black text-[#1C1917]">฿{{ "%.2f"|format(user.wallet_balance) }}</span>
+        </div>
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+          <a href="{{ url_for('topup') }}" class="px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-[#FF6B4A] hover:bg-[#E85938] shadow-sm shadow-[#FF6B4A]/25 transition inline-flex items-center justify-center gap-1.5">
+            <i class="fa-solid fa-wallet"></i>
+            <span>{{ t('nav_topup') }}</span>
+          </a>
+          <a href="{{ url_for('wallet_transactions') }}" class="px-4 py-2.5 rounded-xl text-xs font-bold text-stone-700 bg-[#FAF8F5] border border-[#E7E2D9] hover:border-[#FF6B4A] hover:text-[#FF6B4A] transition inline-flex items-center justify-center gap-1.5 shadow-xs" title="{{ t('nav_history') }}">
+            <i class="fa-solid fa-receipt text-purple-600"></i>
+            <span>{{ t('nav_history') }}</span>
+          </a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- AVATAR MANAGEMENT SECTION (Device Upload & Live Camera Snapshot) -->
+  <div class="bg-white border border-[#E7E2D9] rounded-3xl p-8 sm:p-10 shadow-sm space-y-6">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-[#E7E2D9] gap-4">
+      <div>
+        <h2 class="text-lg font-bold text-[#1C1917] tracking-tight flex items-center gap-2">
+          <i class="fa-solid fa-camera text-[#FF6B4A]"></i>
+          <span>{{ t('avatar_section_title') }}</span>
+        </h2>
+        <p class="text-xs text-stone-500 mt-0.5">เปลี่ยนรูปโปรไฟล์ของคุณด้วยการอัปโหลดไฟล์รูปภาพจากเครื่อง หรือถ่ายภาพสดด้วยกล้องเว็บแคม</p>
+      </div>
+
+      {% if user.avatar_url %}
+        <div class="flex items-center gap-2">
+          <button type="button" onclick="openCropModalWithUrl('{{ user.avatar_url }}')" class="px-3.5 py-2 rounded-xl text-xs font-bold text-stone-700 bg-white border border-[#E7E2D9] hover:border-[#FF6B4A] hover:text-[#FF6B4A] transition inline-flex items-center gap-2 shadow-xs">
+            <i class="fa-solid fa-arrows-up-down-left-right text-[#FF6B4A]"></i>
+            <span>{{ t('avatar_crop_adjust_existing') }}</span>
+          </button>
+          <form method="POST" action="{{ url_for('remove_avatar') }}" onsubmit="return confirm('คุณต้องการลบรูปโปรไฟล์และกลับไปใช้รูปเริ่มต้นใช่หรือไม่?');">
+            <button type="submit" class="px-3.5 py-2 rounded-xl text-xs font-bold text-rose-600 bg-rose-50 border border-rose-200 hover:bg-rose-100 transition inline-flex items-center gap-1.5 shadow-xs">
+              <i class="fa-solid fa-trash-can"></i>
+              <span>{{ t('avatar_remove_btn') }}</span>
+            </button>
+          </form>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Avatar Source Tabs / Two-Column Layout -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+      
+      <!-- Option A: Upload from Device -->
+      <div class="border border-[#E7E2D9] rounded-2xl p-6 bg-[#FAF8F5]/60 flex flex-col justify-between space-y-4">
+        <div>
+          <h3 class="text-sm font-bold text-stone-800 flex items-center gap-2 mb-2">
+            <i class="fa-solid fa-file-arrow-up text-stone-600"></i>
+            <span>1. {{ t('avatar_upload_device') }}</span>
+          </h3>
+          <p class="text-xs text-stone-500 mb-4">{{ t('avatar_select_file') }}</p>
+
+          <div class="space-y-4">
+            <div class="flex items-center justify-center w-full">
+              <label for="avatar_file" class="flex flex-col items-center justify-center w-full h-36 border-2 border-[#E7E2D9] border-dashed rounded-xl cursor-pointer bg-white hover:bg-stone-50 hover:border-[#FF6B4A] transition">
+                <div class="flex flex-col items-center justify-center pt-5 pb-6 text-center px-4">
+                  <i class="fa-solid fa-cloud-arrow-up text-2xl text-stone-400 mb-2"></i>
+                  <p class="text-xs font-semibold text-stone-700">คลิกเพื่อเลือกรูปภาพจากเครื่อง</p>
+                  <p class="text-[11px] text-stone-400">PNG, JPG, WEBP (ไม่เกิน 5MB)</p>
+                </div>
+                <input id="avatar_file" name="avatar_file" type="file" accept="image/png, image/jpeg, image/webp" class="hidden" onchange="previewAndCropAvatarFile(this)">
+              </label>
+            </div>
+
+            <!-- Preview Selected File (Shows only after file selected) -->
+            <div id="fileUploadPreviewBox" class="hidden space-y-3 p-3 bg-white rounded-xl border border-[#E7E2D9]">
+              <div class="flex items-center gap-3">
+                <img id="fileUploadPreview" src="#" alt="Preview" class="w-14 h-14 rounded-xl object-cover border border-[#E7E2D9]">
+                <div class="flex-1 min-w-0">
+                  <p id="fileUploadName" class="text-xs font-semibold text-stone-800 truncate"></p>
+                  <p class="text-[10px] text-emerald-600 font-bold">เลือกไฟล์แล้ว</p>
+                </div>
+              </div>
+              <button type="button" onclick="openCropModalWithUrl(currentSelectedFileDataUrl)" class="w-full py-2 px-3 rounded-lg text-xs font-bold text-stone-800 bg-[#FAF8F5] border border-[#E7E2D9] hover:border-[#FF6B4A] hover:text-[#FF6B4A] transition flex items-center justify-center gap-2 shadow-xs">
+                <i class="fa-solid fa-arrows-up-down-left-right text-[#FF6B4A]"></i>
+                <span>ปรับตำแหน่ง / ซูมรูปอีกครั้ง</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Option B: Live Webcam Snapshot -->
+      <div class="border border-[#E7E2D9] rounded-2xl p-6 bg-[#FAF8F5]/60 flex flex-col justify-between space-y-4">
+        <div>
+          <h3 class="text-sm font-bold text-stone-800 flex items-center gap-2 mb-2">
+            <i class="fa-solid fa-camera-retro text-[#FF6B4A]"></i>
+            <span>2. {{ t('avatar_take_photo') }}</span>
+          </h3>
+          <p class="text-xs text-stone-500 mb-4">เปิดกล้องจากอุปกรณ์ของคุณ กดถ่ายภาพ และใช้เป็นรูปโปรไฟล์ได้ทันที</p>
+
+          <!-- Start Camera Button (Initial State) -->
+          <button type="button" id="startCameraBtn" onclick="startCamera()" class="w-full py-3 px-4 rounded-xl font-bold text-xs text-stone-800 bg-white border border-[#E7E2D9] hover:border-[#FF6B4A] hover:text-[#FF6B4A] transition shadow-xs flex items-center justify-center gap-2">
+            <i class="fa-solid fa-video text-[#FF6B4A]"></i>
+            <span>{{ t('avatar_camera_start') }}</span>
+          </button>
+
+          <!-- Camera Stream & Capture Box (Hidden initially) -->
+          <div id="cameraBox" class="hidden space-y-3">
+            <div class="relative w-full aspect-square max-w-[280px] mx-auto bg-black rounded-2xl overflow-hidden border-2 border-stone-800 shadow-md flex items-center justify-center">
+              <!-- Live Video Feed -->
+              <video id="cameraVideo" playsinline autoplay class="w-full h-full object-cover"></video>
+              
+              <!-- Captured Frame Preview (hidden until snapped) -->
+              <img id="cameraPhotoPreview" src="#" alt="Snapshot" class="hidden w-full h-full object-cover">
+              
+              <!-- Hidden Canvas for frame processing -->
+              <canvas id="cameraCanvas" class="hidden"></canvas>
+            </div>
+
+            <!-- Camera Controls -->
+            <div class="flex items-center gap-2 justify-center pt-1 flex-wrap">
+              <button type="button" id="snapBtn" onclick="takePhoto()" class="px-4 py-2 rounded-xl font-bold text-xs text-white bg-[#FF6B4A] hover:bg-[#E85938] shadow-sm transition flex items-center gap-1.5">
+                <i class="fa-solid fa-circle-dot"></i>
+                <span>{{ t('avatar_camera_snap') }}</span>
+              </button>
+              
+              <button type="button" id="retakeBtn" onclick="retakePhoto()" class="hidden px-3 py-2 rounded-xl font-bold text-xs text-stone-700 bg-white border border-[#E7E2D9] hover:border-stone-400 transition flex items-center gap-1.5">
+                <i class="fa-solid fa-rotate-left"></i>
+                <span>{{ t('avatar_camera_retake') }}</span>
+              </button>
+
+              <button type="button" id="cropCameraBtn" onclick="openCropFromCamera()" class="hidden px-3.5 py-2 rounded-xl font-bold text-xs text-stone-800 bg-white border border-[#E7E2D9] hover:border-[#FF6B4A] hover:text-[#FF6B4A] transition flex items-center gap-1.5 shadow-xs">
+                <i class="fa-solid fa-arrows-up-down-left-right text-[#FF6B4A]"></i>
+                <span>ปรับเลื่อน / ซูมรูป</span>
+              </button>
+
+              <button type="button" id="saveCameraBtn" onclick="saveCameraPhoto()" class="hidden px-4 py-2 rounded-xl font-bold text-xs text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm transition flex items-center gap-1.5">
+                <i class="fa-solid fa-floppy-disk"></i>
+                <span>{{ t('avatar_camera_save') }}</span>
+              </button>
+
+              <button type="button" onclick="stopCamera()" class="px-3 py-2 rounded-xl font-bold text-xs text-stone-500 hover:text-stone-800 transition" title="{{ t('avatar_camera_stop') }}">
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Settings Grid (Edit Info & Change Password) -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+    
+    <!-- 1. Edit Profile Info Card -->
+    <div class="bg-white border border-[#E7E2D9] rounded-3xl p-8 space-y-6 shadow-sm">
+      <div class="border-b border-[#E7E2D9] pb-4">
+        <h2 class="text-lg font-bold text-[#1C1917] tracking-tight">แก้ไขข้อมูลส่วนตัว</h2>
+        <p class="text-xs text-stone-500 mt-0.5">แก้ไขชื่อผู้ใช้ เบอร์โทร ข้อมูลแนะนำตัว และสเปกเครื่องพิมพ์</p>
+      </div>
+
+      <form method="POST" action="{{ url_for('profile') }}" class="space-y-4">
+        <input type="hidden" name="action" value="update_info">
+
+        <div>
+          <label for="username" class="block text-[11px] font-semibold text-stone-600 mb-1.5 uppercase tracking-wider">{{ t('profile_username') }}</label>
+          <input type="text" id="username" name="username" value="{{ user.username }}" required
+            class="w-full px-4 py-2.5 rounded-xl bg-[#FAF8F5] border border-[#E7E2D9] text-[#1C1917] focus:outline-none focus:bg-white focus:border-[#FF6B4A] focus:ring-2 focus:ring-[#FF6B4A]/10 transition text-sm">
+        </div>
+
+        <div>
+          <label for="email_disabled" class="block text-[11px] font-semibold text-stone-600 mb-1.5 uppercase tracking-wider">{{ t('profile_email') }} (ไม่สามารถเปลี่ยนได้)</label>
+          <input type="email" id="email_disabled" value="{{ user.email }}" disabled
+            class="w-full px-4 py-2.5 rounded-xl bg-stone-100 border border-[#E7E2D9] text-stone-400 cursor-not-allowed text-sm">
+        </div>
+
+        <div>
+          <label for="phone" class="block text-[11px] font-semibold text-stone-600 mb-1.5 uppercase tracking-wider">{{ t('profile_phone') }}</label>
+          <input type="tel" id="phone" name="phone" value="{{ user.phone_number or '' }}" placeholder="08xxxxxxxx"
+            class="w-full px-4 py-2.5 rounded-xl bg-[#FAF8F5] border border-[#E7E2D9] text-[#1C1917] focus:outline-none focus:bg-white focus:border-[#FF6B4A] focus:ring-2 focus:ring-[#FF6B4A]/10 transition text-sm">
+        </div>
+
+        <div>
+          <label for="address" class="block text-[11px] font-semibold text-stone-600 mb-1.5 uppercase tracking-wider">{{ t('profile_address') }}</label>
+          <textarea id="address" name="address" rows="2" placeholder="บ้านเลขที่, ถนน, ตำบล/แขวง, อำเภอ/เขต, จังหวัด, รหัสไปรษณีย์"
+            class="w-full px-4 py-2 rounded-xl bg-[#FAF8F5] border border-[#E7E2D9] text-[#1C1917] focus:outline-none focus:bg-white focus:border-[#FF6B4A] focus:ring-2 focus:ring-[#FF6B4A]/10 transition text-sm">{{ user.address or '' }}</textarea>
+        </div>
+
+        <div>
+          <label for="printer_setup" class="block text-[11px] font-semibold text-stone-600 mb-1.5 uppercase tracking-wider">{{ t('profile_printer') }}</label>
+          <input type="text" id="printer_setup" name="printer_setup" value="{{ user.printer_setup or '' }}" placeholder="เช่น Bambu Lab P1S, Ender 3 V3, Prusa MK4"
+            class="w-full px-4 py-2.5 rounded-xl bg-[#FAF8F5] border border-[#E7E2D9] text-[#1C1917] focus:outline-none focus:bg-white focus:border-[#FF6B4A] focus:ring-2 focus:ring-[#FF6B4A]/10 transition text-sm">
+        </div>
+
+        <div>
+          <label for="bio" class="block text-[11px] font-semibold text-stone-600 mb-1.5 uppercase tracking-wider">{{ t('profile_bio') }}</label>
+          <textarea id="bio" name="bio" rows="2" placeholder="บอกเล่าเกี่ยวกับตัวคุณและสไตล์งาน 3D..."
+            class="w-full px-4 py-2 rounded-xl bg-[#FAF8F5] border border-[#E7E2D9] text-[#1C1917] focus:outline-none focus:bg-white focus:border-[#FF6B4A] focus:ring-2 focus:ring-[#FF6B4A]/10 transition text-sm">{{ user.bio or '' }}</textarea>
+        </div>
+
+        <!-- Security Password Verification Box (Required to update profile & address) -->
+        <div class="pt-3 pb-1 border-t border-[#E7E2D9] space-y-2 bg-amber-50/50 p-4 rounded-2xl border border-amber-200/70">
+          <label for="verify_password" class="block text-[11px] font-bold text-amber-950 uppercase tracking-wider flex items-center justify-between">
+            <span class="flex items-center gap-1.5">
+              <i class="fa-solid fa-lock text-[#FF6B4A]"></i>
+              <span>{{ t('profile_verify_password') }}</span>
+            </span>
+            <span class="text-rose-600 font-bold text-[10px]">* จำเป็นต้องกรอก</span>
+          </label>
+          <div class="relative">
+            <input type="password" id="verify_password" name="verify_password" required placeholder="กรอกรหัสผ่านเข้าสู่ระบบปัจจุบันของคุณเพื่อยืนยัน"
+              class="w-full pl-4 pr-11 py-2.5 rounded-xl bg-white border border-amber-300 text-[#1C1917] placeholder-stone-400 focus:outline-none focus:border-[#FF6B4A] focus:ring-2 focus:ring-[#FF6B4A]/10 transition text-sm shadow-2xs">
+            <button type="button" onclick="togglePasswordVisibility('verify_password', this)" 
+              class="absolute right-3.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700 transition p-1 text-sm focus:outline-none"
+              title="คลิกเพื่อดูหรือซ่อนรหัสผ่าน">
+              <i class="fa-solid fa-eye"></i>
+            </button>
+          </div>
+          <p class="text-[11px] text-amber-800 flex items-center gap-1.5">
+            <i class="fa-solid fa-shield-halved text-amber-600 text-xs"></i>
+            <span>เพื่อความปลอดภัย ต้องกรอกรหัสผ่านเข้าสู่ระบบปัจจุบันเพื่อบันทึกการแก้ไขข้อมูลและที่อยู่</span>
+          </p>
+        </div>
+
+        <div class="pt-2">
+          <button type="submit" class="w-full py-3 px-4 rounded-xl font-bold text-xs text-white bg-[#1C1917] hover:bg-stone-800 transition flex items-center justify-center gap-2">
+            <i class="fa-solid fa-floppy-disk"></i>
+            <span>{{ t('profile_save_btn') }}</span>
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- 2. Change Password Card (With Current Password or Email OTP Reset) -->
+    <div class="bg-white border border-[#E7E2D9] rounded-3xl p-8 space-y-6 shadow-sm">
+      <div class="border-b border-[#E7E2D9] pb-4">
+        <h2 class="text-lg font-bold text-[#1C1917] tracking-tight">เปลี่ยนรหัสผ่าน</h2>
+        <p class="text-xs text-stone-500 mt-0.5">ตั้งรหัสผ่านใหม่เพื่อความปลอดภัย หรือขอรับรหัส OTP เพื่อรีเซ็ตหากลืมรหัสผ่านเดิม</p>
+      </div>
+
+      <!-- Mode 1: Change password using current password -->
+      <div id="panelCurrentPw">
+        <form method="POST" action="{{ url_for('profile') }}" class="space-y-4">
+          <input type="hidden" name="action" value="update_password">
+
+          <div>
+            <div class="flex items-center justify-between mb-1.5">
+              <label for="current_password" class="block text-[11px] font-semibold text-stone-600 uppercase tracking-wider">รหัสผ่านปัจจุบัน</label>
+              <button type="button" onclick="switchPwMethod('otp')" class="text-xs font-semibold text-[#FF6B4A] hover:underline transition">
+                ลืมรหัสผ่าน
+              </button>
+            </div>
+            <div class="relative">
+              <input type="password" id="current_password" name="current_password" required placeholder="••••••••"
+                class="w-full pl-4 pr-11 py-2.5 rounded-xl bg-[#FAF8F5] border border-[#E7E2D9] text-[#1C1917] focus:outline-none focus:bg-white focus:border-[#FF6B4A] focus:ring-2 focus:ring-[#FF6B4A]/10 transition text-sm">
+              <button type="button" onclick="togglePasswordVisibility('current_password', this)" 
+                class="absolute right-3.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700 transition p-1 text-sm focus:outline-none"
+                title="คลิกเพื่อดูหรือซ่อนรหัสผ่าน">
+                <i class="fa-solid fa-eye"></i>
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label for="new_password" class="block text-[11px] font-semibold text-stone-600 mb-1.5 uppercase tracking-wider">รหัสผ่านใหม่ (อย่างน้อย 6 ตัวอักษร)</label>
+            <div class="relative">
+              <input type="password" id="new_password" name="new_password" required minlength="6" placeholder="••••••••"
+                class="w-full pl-4 pr-11 py-2.5 rounded-xl bg-[#FAF8F5] border border-[#E7E2D9] text-[#1C1917] focus:outline-none focus:bg-white focus:border-[#FF6B4A] focus:ring-2 focus:ring-[#FF6B4A]/10 transition text-sm">
+              <button type="button" onclick="togglePasswordVisibility('new_password', this)" 
+                class="absolute right-3.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700 transition p-1 text-sm focus:outline-none"
+                title="คลิกเพื่อดูหรือซ่อนรหัสผ่าน">
+                <i class="fa-solid fa-eye"></i>
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label for="confirm_new_password" class="block text-[11px] font-semibold text-stone-600 mb-1.5 uppercase tracking-wider">ยืนยันรหัสผ่านใหม่</label>
+            <div class="relative">
+              <input type="password" id="confirm_new_password" name="confirm_new_password" required minlength="6" placeholder="••••••••"
+                class="w-full pl-4 pr-11 py-2.5 rounded-xl bg-[#FAF8F5] border border-[#E7E2D9] text-[#1C1917] focus:outline-none focus:bg-white focus:border-[#FF6B4A] focus:ring-2 focus:ring-[#FF6B4A]/10 transition text-sm">
+              <button type="button" onclick="togglePasswordVisibility('confirm_new_password', this)" 
+                class="absolute right-3.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700 transition p-1 text-sm focus:outline-none"
+                title="คลิกเพื่อดูหรือซ่อนรหัสผ่าน">
+                <i class="fa-solid fa-eye"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="pt-3">
+            <button type="submit" class="w-full py-3 px-4 rounded-xl font-bold text-xs text-white bg-[#FF6B4A] hover:bg-[#E85938] shadow-sm shadow-[#FF6B4A]/25 transition">
+              อัปเดตรหัสผ่านใหม่
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Mode 2: Forgot password -> Reset via Email OTP -->
+      <div id="panelOtpPw" class="hidden space-y-4">
+        
+        <!-- Header & Back button to Current Password form -->
+        <div class="flex items-center justify-between pb-2 border-b border-[#E7E2D9]">
+          <span class="text-xs font-bold text-stone-800 flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-[#FF6B4A]"></span>
+            ขอรับรหัส OTP เพื่อตั้งรหัสผ่านใหม่
+          </span>
+          <button type="button" onclick="switchPwMethod('current')" class="text-xs font-semibold text-stone-500 hover:text-[#FF6B4A] transition inline-flex items-center gap-1">
+            <i class="fa-solid fa-arrow-left text-[10px]"></i>
+            <span>กลับไปใช้รหัสผ่านเดิม</span>
+          </button>
+        </div>
+        
+        <!-- Recipient Email Notice & Send Button -->
+        <div class="p-4 bg-[#FAF8F5] border border-[#E7E2D9] rounded-2xl space-y-3">
+          <div class="flex items-center justify-between text-xs">
+            <span class="font-bold text-stone-700 flex items-center gap-1.5">
+              <i class="fa-solid fa-envelope text-[#FF6B4A]"></i>
+              <span>ส่งรหัส OTP ไปที่อีเมล:</span>
+            </span>
+            <span class="font-bold text-stone-900 bg-white px-2.5 py-1 rounded-lg border border-[#E7E2D9] text-xs truncate max-w-[200px]" title="{{ user.email }}">
+              {{ user.email }}
+            </span>
+          </div>
+
+          <p class="text-[11px] text-stone-500 leading-relaxed">
+            กดปุ่มด้านล่างเพื่อรับรหัส OTP 6 หลักส่งตรงไปยังอีเมลของคุณ สำหรับใช้ยืนยันการตั้งรหัสผ่านใหม่
+          </p>
+
+          <button type="button" id="btnRequestResetOtp" onclick="requestResetOtp()" 
+                  class="w-full py-2.5 px-3 rounded-xl font-bold text-xs bg-white border border-[#E7E2D9] hover:border-[#FF6B4A] text-stone-800 hover:text-[#FF6B4A] transition shadow-xs flex items-center justify-center gap-2">
+            <i class="fa-solid fa-paper-plane text-[#FF6B4A]"></i>
+            <span id="btnRequestResetOtpText">{{ t('pw_otp_btn_send') }}</span>
+          </button>
+
+          <!-- Status / Alert Box -->
+          <div id="otpStatusNotice" class="hidden p-3 rounded-xl text-xs flex items-start gap-2"></div>
+        </div>
+
+        <!-- Form for Resetting Password with OTP -->
+        <form method="POST" action="{{ url_for('profile') }}" class="space-y-4">
+          <input type="hidden" name="action" value="reset_password_otp">
+
+          <div>
+            <label for="reset_otp_code" class="block text-[11px] font-semibold text-stone-600 mb-1.5 uppercase tracking-wider">
+              รหัส OTP 6 หลักจากอีเมล <span class="text-[#FF6B4A]">*</span>
+            </label>
+            <input type="text" id="reset_otp_code" name="otp_code" required maxlength="6" inputmode="numeric" pattern="[0-9]{6}" placeholder="เช่น 123456"
+              class="w-full px-4 py-2.5 rounded-xl bg-[#FAF8F5] border border-[#E7E2D9] text-[#1C1917] font-mono text-base tracking-widest text-center focus:outline-none focus:bg-white focus:border-[#FF6B4A] focus:ring-2 focus:ring-[#FF6B4A]/10 transition">
+          </div>
+
+          <div>
+            <label for="reset_new_password" class="block text-[11px] font-semibold text-stone-600 mb-1.5 uppercase tracking-wider">รหัสผ่านใหม่ (อย่างน้อย 6 ตัวอักษร)</label>
+            <div class="relative">
+              <input type="password" id="reset_new_password" name="new_password" required minlength="6" placeholder="••••••••"
+                class="w-full pl-4 pr-11 py-2.5 rounded-xl bg-[#FAF8F5] border border-[#E7E2D9] text-[#1C1917] focus:outline-none focus:bg-white focus:border-[#FF6B4A] focus:ring-2 focus:ring-[#FF6B4A]/10 transition text-sm">
+              <button type="button" onclick="togglePasswordVisibility('reset_new_password', this)" 
+                class="absolute right-3.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700 transition p-1 text-sm focus:outline-none"
+                title="คลิกเพื่อดูหรือซ่อนรหัสผ่าน">
+                <i class="fa-solid fa-eye"></i>
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label for="reset_confirm_new_password" class="block text-[11px] font-semibold text-stone-600 mb-1.5 uppercase tracking-wider">ยืนยันรหัสผ่านใหม่</label>
+            <div class="relative">
+              <input type="password" id="reset_confirm_new_password" name="confirm_new_password" required minlength="6" placeholder="••••••••"
+                class="w-full pl-4 pr-11 py-2.5 rounded-xl bg-[#FAF8F5] border border-[#E7E2D9] text-[#1C1917] focus:outline-none focus:bg-white focus:border-[#FF6B4A] focus:ring-2 focus:ring-[#FF6B4A]/10 transition text-sm">
+              <button type="button" onclick="togglePasswordVisibility('reset_confirm_new_password', this)" 
+                class="absolute right-3.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700 transition p-1 text-sm focus:outline-none"
+                title="คลิกเพื่อดูหรือซ่อนรหัสผ่าน">
+                <i class="fa-solid fa-eye"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="pt-2">
+            <button type="submit" class="w-full py-3 px-4 rounded-xl font-bold text-xs text-white bg-[#FF6B4A] hover:bg-[#E85938] shadow-sm shadow-[#FF6B4A]/25 transition flex items-center justify-center gap-2">
+              <i class="fa-solid fa-circle-check"></i>
+              <span>{{ t('pw_otp_submit_btn') }}</span>
+            </button>
+          </div>
+        </form>
+
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- AVATAR CROP & REPOSITION MODAL (Facebook / Instagram Style) -->
+<div id="avatarCropModal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-black/75 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
+  <div class="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-[#E7E2D9] p-5 sm:p-7 space-y-4 overflow-hidden animate-in fade-in zoom-in-95">
+    
+    <!-- Modal Header -->
+    <div class="flex items-start justify-between pb-3 border-b border-[#E7E2D9]">
+      <div>
+        <h3 class="text-base sm:text-lg font-bold text-[#1C1917] tracking-tight flex items-center gap-2">
+          <i class="fa-solid fa-crop-simple text-[#FF6B4A]"></i>
+          <span>{{ t('avatar_crop_modal_title') }}</span>
+        </h3>
+        <p class="text-xs text-stone-500 mt-0.5">
+          {{ t('avatar_crop_modal_sub') }}
+        </p>
+      </div>
+      <button type="button" onclick="closeCropModal()" class="w-8 h-8 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-500 hover:text-stone-800 transition flex items-center justify-center">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <!-- Canvas Stage (Viewport) -->
+    <div class="relative flex flex-col items-center justify-center">
+      <div class="relative w-[320px] sm:w-[360px] h-[320px] sm:h-[360px] rounded-2xl overflow-hidden bg-stone-900 border-2 border-stone-800 shadow-inner flex items-center justify-center select-none touch-none">
+        <canvas id="cropCanvas" width="360" height="360" class="cursor-grab active:cursor-grabbing block"></canvas>
+        
+        <!-- Helpful Floating Instruction Badge -->
+        <div id="cropHelpHint" class="absolute bottom-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-black/60 backdrop-blur-xs text-[11px] text-white/90 font-medium pointer-events-none transition-opacity duration-300 flex items-center gap-1.5 shadow-sm">
+          <i class="fa-solid fa-hand-pointer text-[#FF6B4A]"></i>
+          <span>คลิกค้างแล้วลากเพื่อเลื่อนรูป</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Controls Bar -->
+    <div class="space-y-3.5 bg-[#FAF8F5] p-3.5 rounded-2xl border border-[#E7E2D9]">
+      <!-- Zoom Slider -->
+      <div class="flex items-center gap-3">
+        <span class="text-xs font-semibold text-stone-600 flex items-center gap-1 min-w-[70px]">
+          <i class="fa-solid fa-magnifying-glass text-stone-400"></i>
+          <span>{{ t('avatar_crop_zoom') }}</span>
+        </span>
+        <button type="button" onclick="adjustZoom(-0.15)" class="w-7 h-7 rounded-lg bg-white border border-[#E7E2D9] text-stone-600 hover:text-[#FF6B4A] hover:border-[#FF6B4A] transition flex items-center justify-center text-xs shadow-xs" title="ซูมออก">
+          <i class="fa-solid fa-minus"></i>
+        </button>
+        <input type="range" id="cropZoomSlider" min="0.5" max="3.5" step="0.01" value="1.0" 
+               class="flex-1 h-2 bg-stone-200 rounded-lg appearance-none cursor-pointer accent-[#FF6B4A]"
+               oninput="onZoomSliderChange(this.value)">
+        <button type="button" onclick="adjustZoom(0.15)" class="w-7 h-7 rounded-lg bg-white border border-[#E7E2D9] text-stone-600 hover:text-[#FF6B4A] hover:border-[#FF6B4A] transition flex items-center justify-center text-xs shadow-xs" title="ซูมเข้า">
+          <i class="fa-solid fa-plus"></i>
+        </button>
+        <span id="cropZoomLabel" class="text-xs font-bold text-stone-700 min-w-[42px] text-right">100%</span>
+      </div>
+
+      <!-- Quick Action Buttons: Rotate L, Rotate R, Flip H, Reset -->
+      <div class="flex items-center justify-between pt-1 border-t border-[#E7E2D9]/70 flex-wrap gap-2">
+        <div class="flex items-center gap-2">
+          <button type="button" onclick="rotateImage(-90)" class="px-2.5 py-1.5 rounded-xl bg-white border border-[#E7E2D9] text-xs font-medium text-stone-700 hover:text-[#FF6B4A] hover:border-[#FF6B4A] transition flex items-center gap-1.5 shadow-xs" title="{{ t('avatar_crop_rotate_left') }}">
+            <i class="fa-solid fa-rotate-left"></i>
+            <span class="hidden sm:inline">{{ t('avatar_crop_rotate_left') }}</span>
+          </button>
+          <button type="button" onclick="rotateImage(90)" class="px-2.5 py-1.5 rounded-xl bg-white border border-[#E7E2D9] text-xs font-medium text-stone-700 hover:text-[#FF6B4A] hover:border-[#FF6B4A] transition flex items-center gap-1.5 shadow-xs" title="{{ t('avatar_crop_rotate_right') }}">
+            <i class="fa-solid fa-rotate-right"></i>
+            <span class="hidden sm:inline">{{ t('avatar_crop_rotate_right') }}</span>
+          </button>
+          <button type="button" onclick="flipImageHorizontal()" class="px-2.5 py-1.5 rounded-xl bg-white border border-[#E7E2D9] text-xs font-medium text-stone-700 hover:text-[#FF6B4A] hover:border-[#FF6B4A] transition flex items-center gap-1.5 shadow-xs" title="{{ t('avatar_crop_flip') }}">
+            <i class="fa-solid fa-arrows-left-right"></i>
+            <span class="hidden sm:inline">{{ t('avatar_crop_flip') }}</span>
+          </button>
+        </div>
+
+        <button type="button" onclick="resetCropTransform()" class="px-2.5 py-1.5 rounded-xl bg-white border border-[#E7E2D9] text-xs font-medium text-stone-500 hover:text-stone-800 transition flex items-center gap-1.5 shadow-xs">
+          <i class="fa-solid fa-arrows-rotate"></i>
+          <span>{{ t('avatar_crop_reset') }}</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Live Preview Row & Action Buttons -->
+    <div class="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
+      <!-- Live Preview Circle -->
+      <div class="flex items-center space-x-3">
+        <div class="relative w-12 h-12 rounded-full overflow-hidden border-2 border-[#FF6B4A] shadow-xs bg-stone-100 flex-shrink-0">
+          <canvas id="cropPreviewCanvas" width="96" height="96" class="w-full h-full object-cover"></canvas>
+        </div>
+        <div>
+          <p class="text-xs font-bold text-stone-800">{{ t('avatar_crop_preview_title') }}</p>
+          <p class="text-[11px] text-stone-400">{{ t('avatar_crop_preview_hint') }}</p>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+        <button type="button" onclick="closeCropModal()" class="flex-1 sm:flex-none px-4 py-2.5 rounded-xl text-xs font-bold text-stone-600 bg-stone-100 hover:bg-stone-200 transition">
+          {{ t('avatar_crop_cancel') }}
+        </button>
+        <button type="button" id="saveCropBtn" onclick="saveCroppedAvatar()" class="flex-1 sm:flex-none px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-[#FF6B4A] hover:bg-[#E85938] shadow-sm shadow-[#FF6B4A]/25 transition flex items-center justify-center gap-2">
+          <i class="fa-solid fa-check"></i>
+          <span>{{ t('avatar_crop_apply') }}</span>
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- JavaScript for Device File Preview, Live Webcam Snapshot, & Avatar Reposition/Cropper -->
+<script>
+  // -------------------------------------------------------------
+  // 1. Interactive Cropper / Reposition Engine (Facebook / IG Style)
+  // -------------------------------------------------------------
+  let cropImage = new Image();
+  let cropBaseScale = 1.0;
+  let cropZoom = 1.0;
+  let cropPanX = 0;
+  let cropPanY = 0;
+  let cropRotation = 0;
+  let cropFlipH = 1;
+
+  let isCropDragging = false;
+  let isCropInteracting = false;
+  let cropStartMouseX = 0;
+  let cropStartMouseY = 0;
+  let cropPinchDist = null;
+  let currentSelectedFileDataUrl = null;
+
+  const cropCanvas = document.getElementById('cropCanvas');
+  const cropCtx = cropCanvas ? cropCanvas.getContext('2d') : null;
+  const cropPreviewCanvas = document.getElementById('cropPreviewCanvas');
+  const cropPreviewCtx = cropPreviewCanvas ? cropPreviewCanvas.getContext('2d') : null;
+
+  const CROP_CANVAS_SIZE = 360;
+  const CROP_RADIUS = 140; // 280px circle viewport
+  const CROP_CENTER = CROP_CANVAS_SIZE / 2;
+
+  function openCropModalWithUrl(url) {
+    if (!url) return;
+    const modal = document.getElementById('avatarCropModal');
+    const helpHint = document.getElementById('cropHelpHint');
+    if (helpHint) helpHint.classList.remove('opacity-0');
+
+    cropImage = new Image();
+    cropImage.crossOrigin = 'anonymous';
+    cropImage.onload = function() {
+      const minDim = Math.min(cropImage.naturalWidth, cropImage.naturalHeight);
+      cropBaseScale = (CROP_RADIUS * 2) / Math.max(minDim, 1);
+      cropZoom = 1.0;
+      cropPanX = 0;
+      cropPanY = 0;
+      cropRotation = 0;
+      cropFlipH = 1;
+
+      const slider = document.getElementById('cropZoomSlider');
+      if (slider) slider.value = 1.0;
+      const label = document.getElementById('cropZoomLabel');
+      if (label) label.textContent = '100%';
+
+      modal.classList.remove('hidden');
+      renderCropCanvas();
+    };
+    cropImage.src = url;
+  }
+
+  function closeCropModal() {
+    const modal = document.getElementById('avatarCropModal');
+    if (modal) modal.classList.add('hidden');
+    isCropDragging = false;
+    isCropInteracting = false;
+  }
+
+  function renderCropCanvas() {
+    if (!cropCtx || !cropImage || !cropImage.complete || cropImage.naturalWidth === 0) return;
+
+    cropCtx.clearRect(0, 0, CROP_CANVAS_SIZE, CROP_CANVAS_SIZE);
+
+    // Dark canvas background
+    cropCtx.fillStyle = '#171717';
+    cropCtx.fillRect(0, 0, CROP_CANVAS_SIZE, CROP_CANVAS_SIZE);
+
+    // Image layer with pan, rotation, flip & zoom
+    cropCtx.save();
+    cropCtx.translate(CROP_CENTER, CROP_CENTER);
+    cropCtx.translate(cropPanX, cropPanY);
+    cropCtx.rotate((cropRotation * Math.PI) / 180);
+    cropCtx.scale(cropFlipH, 1);
+
+    const effScale = cropBaseScale * cropZoom;
+    cropCtx.scale(effScale, effScale);
+    cropCtx.drawImage(
+      cropImage,
+      -cropImage.naturalWidth / 2,
+      -cropImage.naturalHeight / 2,
+      cropImage.naturalWidth,
+      cropImage.naturalHeight
+    );
+    cropCtx.restore();
+
+    // Dark vignette mask
+    cropCtx.save();
+    cropCtx.fillStyle = 'rgba(15, 23, 42, 0.65)';
+    cropCtx.fillRect(0, 0, CROP_CANVAS_SIZE, CROP_CANVAS_SIZE);
+
+    // Punch circular hole
+    cropCtx.globalCompositeOperation = 'destination-out';
+    cropCtx.beginPath();
+    cropCtx.arc(CROP_CENTER, CROP_CENTER, CROP_RADIUS, 0, Math.PI * 2);
+    cropCtx.fill();
+    cropCtx.restore();
+
+    // White circular border outline
+    cropCtx.save();
+    cropCtx.strokeStyle = '#FFFFFF';
+    cropCtx.lineWidth = 2.5;
+    cropCtx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+    cropCtx.shadowBlur = 4;
+    cropCtx.beginPath();
+    cropCtx.arc(CROP_CENTER, CROP_CENTER, CROP_RADIUS, 0, Math.PI * 2);
+    cropCtx.stroke();
+
+    // Rule of Thirds grid when dragging / zooming
+    if (isCropInteracting) {
+      cropCtx.beginPath();
+      cropCtx.arc(CROP_CENTER, CROP_CENTER, CROP_RADIUS, 0, Math.PI * 2);
+      cropCtx.clip();
+
+      cropCtx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
+      cropCtx.lineWidth = 1;
+      cropCtx.shadowBlur = 0;
+
+      const r3 = (CROP_RADIUS * 2) / 3;
+      // Horizontal lines
+      cropCtx.beginPath();
+      cropCtx.moveTo(CROP_CENTER - CROP_RADIUS, CROP_CENTER - CROP_RADIUS + r3);
+      cropCtx.lineTo(CROP_CENTER + CROP_RADIUS, CROP_CENTER - CROP_RADIUS + r3);
+      cropCtx.moveTo(CROP_CENTER - CROP_RADIUS, CROP_CENTER - CROP_RADIUS + r3 * 2);
+      cropCtx.lineTo(CROP_CENTER + CROP_RADIUS, CROP_CENTER - CROP_RADIUS + r3 * 2);
+      // Vertical lines
+      cropCtx.moveTo(CROP_CENTER - CROP_RADIUS + r3, CROP_CENTER - CROP_RADIUS);
+      cropCtx.lineTo(CROP_CENTER - CROP_RADIUS + r3, CROP_CENTER + CROP_RADIUS);
+      cropCtx.moveTo(CROP_CENTER - CROP_RADIUS + r3 * 2, CROP_CENTER - CROP_RADIUS);
+      cropCtx.lineTo(CROP_CENTER - CROP_RADIUS + r3 * 2, CROP_CENTER + CROP_RADIUS);
+      cropCtx.stroke();
+    }
+    cropCtx.restore();
+
+    renderMiniPreview();
+  }
+
+  function renderMiniPreview() {
+    if (!cropPreviewCtx || !cropImage || !cropImage.complete || cropImage.naturalWidth === 0) return;
+    const PREV_SIZE = 96;
+    const pCenter = PREV_SIZE / 2;
+    const pRatio = PREV_SIZE / (CROP_RADIUS * 2);
+
+    cropPreviewCtx.clearRect(0, 0, PREV_SIZE, PREV_SIZE);
+    cropPreviewCtx.fillStyle = '#FAF8F5';
+    cropPreviewCtx.fillRect(0, 0, PREV_SIZE, PREV_SIZE);
+
+    cropPreviewCtx.save();
+    cropPreviewCtx.translate(pCenter, pCenter);
+    cropPreviewCtx.translate(cropPanX * pRatio, cropPanY * pRatio);
+    cropPreviewCtx.rotate((cropRotation * Math.PI) / 180);
+    cropPreviewCtx.scale(cropFlipH, 1);
+
+    const pScale = cropBaseScale * cropZoom * pRatio;
+    cropPreviewCtx.scale(pScale, pScale);
+    cropPreviewCtx.drawImage(
+      cropImage,
+      -cropImage.naturalWidth / 2,
+      -cropImage.naturalHeight / 2,
+      cropImage.naturalWidth,
+      cropImage.naturalHeight
+    );
+    cropPreviewCtx.restore();
+  }
+
+  function applyZoom(newZoom) {
+    cropZoom = Math.min(Math.max(newZoom, 0.5), 3.5);
+    const slider = document.getElementById('cropZoomSlider');
+    if (slider) slider.value = cropZoom;
+    const label = document.getElementById('cropZoomLabel');
+    if (label) label.textContent = Math.round(cropZoom * 100) + '%';
+    renderCropCanvas();
+  }
+
+  function onZoomSliderChange(val) {
+    isCropInteracting = true;
+    applyZoom(parseFloat(val));
+    clearTimeout(window._sliderTimer);
+    window._sliderTimer = setTimeout(() => {
+      isCropInteracting = false;
+      renderCropCanvas();
+    }, 400);
+  }
+
+  function adjustZoom(delta) {
+    applyZoom(cropZoom + delta);
+  }
+
+  function rotateImage(deg) {
+    cropRotation = (cropRotation + deg) % 360;
+    renderCropCanvas();
+  }
+
+  function flipImageHorizontal() {
+    cropFlipH = cropFlipH * -1;
+    renderCropCanvas();
+  }
+
+  function resetCropTransform() {
+    cropPanX = 0;
+    cropPanY = 0;
+    cropRotation = 0;
+    cropFlipH = 1;
+    applyZoom(1.0);
+  }
+
+  // Mouse drag & wheel handlers
+  if (cropCanvas) {
+    cropCanvas.addEventListener('mousedown', (e) => {
+      isCropDragging = true;
+      isCropInteracting = true;
+      cropStartMouseX = e.clientX;
+      cropStartMouseY = e.clientY;
+      document.getElementById('cropHelpHint')?.classList.add('opacity-0');
+      renderCropCanvas();
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (!isCropDragging) return;
+      const dx = e.clientX - cropStartMouseX;
+      const dy = e.clientY - cropStartMouseY;
+      cropPanX += dx;
+      cropPanY += dy;
+      cropStartMouseX = e.clientX;
+      cropStartMouseY = e.clientY;
+      renderCropCanvas();
+    });
+
+    window.addEventListener('mouseup', () => {
+      if (isCropDragging) {
+        isCropDragging = false;
+        isCropInteracting = false;
+        renderCropCanvas();
+      }
+    });
+
+    cropCanvas.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      isCropInteracting = true;
+      const delta = e.deltaY < 0 ? 0.08 : -0.08;
+      applyZoom(cropZoom + delta);
+      clearTimeout(cropCanvas._wheelTimer);
+      cropCanvas._wheelTimer = setTimeout(() => {
+        isCropInteracting = false;
+        renderCropCanvas();
+      }, 400);
+    }, { passive: false });
+
+    // Touch handlers for mobile
+    cropCanvas.addEventListener('touchstart', (e) => {
+      if (e.touches.length === 1) {
+        isCropDragging = true;
+        isCropInteracting = true;
+        cropStartMouseX = e.touches[0].clientX;
+        cropStartMouseY = e.touches[0].clientY;
+      } else if (e.touches.length === 2) {
+        isCropDragging = false;
+        isCropInteracting = true;
+        cropPinchDist = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        );
+      }
+      document.getElementById('cropHelpHint')?.classList.add('opacity-0');
+      renderCropCanvas();
+    }, { passive: false });
+
+    cropCanvas.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      if (e.touches.length === 1 && isCropDragging) {
+        const dx = e.touches[0].clientX - cropStartMouseX;
+        const dy = e.touches[0].clientY - cropStartMouseY;
+        cropPanX += dx;
+        cropPanY += dy;
+        cropStartMouseX = e.touches[0].clientX;
+        cropStartMouseY = e.touches[0].clientY;
+        renderCropCanvas();
+      } else if (e.touches.length === 2 && cropPinchDist) {
+        const dist = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        );
+        const delta = (dist - cropPinchDist) * 0.005;
+        applyZoom(cropZoom + delta);
+        cropPinchDist = dist;
+      }
+    }, { passive: false });
+
+    cropCanvas.addEventListener('touchend', () => {
+      isCropDragging = false;
+      isCropInteracting = false;
+      cropPinchDist = null;
+      renderCropCanvas();
+    });
+  }
+
+  async function saveCroppedAvatar() {
+    if (!cropImage || !cropImage.complete) return;
+
+    const saveBtn = document.getElementById('saveCropBtn');
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> {{ t("avatar_crop_saving") }}';
+
+    try {
+      const OUT_SIZE = 512;
+      const outCanvas = document.createElement('canvas');
+      outCanvas.width = OUT_SIZE;
+      outCanvas.height = OUT_SIZE;
+      const outCtx = outCanvas.getContext('2d');
+      const outCenter = OUT_SIZE / 2;
+      const outRatio = OUT_SIZE / (CROP_RADIUS * 2);
+
+      outCtx.save();
+      outCtx.translate(outCenter, outCenter);
+      outCtx.translate(cropPanX * outRatio, cropPanY * outRatio);
+      outCtx.rotate((cropRotation * Math.PI) / 180);
+      outCtx.scale(cropFlipH, 1);
+
+      const outScale = cropBaseScale * cropZoom * outRatio;
+      outCtx.scale(outScale, outScale);
+      outCtx.drawImage(
+        cropImage,
+        -cropImage.naturalWidth / 2,
+        -cropImage.naturalHeight / 2,
+        cropImage.naturalWidth,
+        cropImage.naturalHeight
+      );
+      outCtx.restore();
+
+      const dataUrl = outCanvas.toDataURL('image/png', 0.95);
+
+      const response = await fetch('{{ url_for("update_avatar") }}', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify({ avatar_data: dataUrl })
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        closeCropModal();
+        window.location.reload();
+      } else {
+        alert('เกิดข้อผิดพลาด: ' + (result.message || 'ไม่สามารถบันทึกรูปภาพได้'));
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = '<i class="fa-solid fa-check"></i> {{ t("avatar_crop_apply") }}';
+      }
+    } catch (err) {
+      alert('เกิดข้อผิดพลาดในการเชื่อมต่อ: ' + err.message);
+      saveBtn.disabled = false;
+      saveBtn.innerHTML = '<i class="fa-solid fa-check"></i> {{ t("avatar_crop_apply") }}';
+    }
+  }
+
+  // -------------------------------------------------------------
+  // 2. Device File Selection & Instant Crop Trigger
+  // -------------------------------------------------------------
+  function triggerFileSelect() {
+    const input = document.getElementById('avatar_file');
+    if (input) input.click();
+  }
+
+  function previewAndCropAvatarFile(input) {
+    if (input.files && input.files[0]) {
+      const file = input.files[0];
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        currentSelectedFileDataUrl = e.target.result;
+        document.getElementById('fileUploadPreview').src = currentSelectedFileDataUrl;
+        document.getElementById('fileUploadName').textContent = file.name;
+        document.getElementById('fileUploadPreviewBox').classList.remove('hidden');
+        
+        // Open the cropper modal immediately
+        openCropModalWithUrl(currentSelectedFileDataUrl);
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  // -------------------------------------------------------------
+  // 3. Webcam Video Stream & Snapshot Handling
+  // -------------------------------------------------------------
+  let cameraStream = null;
+  const cameraVideo = document.getElementById('cameraVideo');
+  const cameraCanvas = document.getElementById('cameraCanvas');
+  const cameraPhotoPreview = document.getElementById('cameraPhotoPreview');
+  const snapBtn = document.getElementById('snapBtn');
+  const retakeBtn = document.getElementById('retakeBtn');
+  const cropCameraBtn = document.getElementById('cropCameraBtn');
+  const saveCameraBtn = document.getElementById('saveCameraBtn');
+  const startCameraBtn = document.getElementById('startCameraBtn');
+  const cameraBox = document.getElementById('cameraBox');
+
+  async function startCamera() {
+    try {
+      cameraStream = await navigator.mediaDevices.getUserMedia({ 
+        video: { width: { ideal: 640 }, height: { ideal: 640 }, facingMode: 'user' }, 
+        audio: false 
+      });
+      cameraVideo.srcObject = cameraStream;
+      cameraVideo.play();
+      
+      cameraBox.classList.remove('hidden');
+      startCameraBtn.classList.add('hidden');
+      snapBtn.classList.remove('hidden');
+      retakeBtn.classList.add('hidden');
+      if (cropCameraBtn) cropCameraBtn.classList.add('hidden');
+      saveCameraBtn.classList.add('hidden');
+      cameraPhotoPreview.classList.add('hidden');
+      cameraVideo.classList.remove('hidden');
+    } catch (err) {
+      alert('ไม่สามารถเข้าถึงกล้องได้: ' + (err.message || err.name) + '\nโปรดตรวจสอบการอนุญาตใช้งานกล้องในเบราว์เซอร์');
+    }
+  }
+
+  function stopCamera() {
+    if (cameraStream) {
+      cameraStream.getTracks().forEach(track => track.stop());
+      cameraStream = null;
+    }
+    cameraBox.classList.add('hidden');
+    startCameraBtn.classList.remove('hidden');
+  }
+
+  function takePhoto() {
+    const width = cameraVideo.videoWidth || 480;
+    const height = cameraVideo.videoHeight || 480;
+    cameraCanvas.width = width;
+    cameraCanvas.height = height;
+    
+    const ctx = cameraCanvas.getContext('2d');
+    ctx.drawImage(cameraVideo, 0, 0, width, height);
+    
+    const dataUrl = cameraCanvas.toDataURL('image/png');
+    cameraPhotoPreview.src = dataUrl;
+    cameraPhotoPreview.classList.remove('hidden');
+    cameraVideo.classList.add('hidden');
+    
+    snapBtn.classList.add('hidden');
+    retakeBtn.classList.remove('hidden');
+    if (cropCameraBtn) cropCameraBtn.classList.remove('hidden');
+    saveCameraBtn.classList.remove('hidden');
+  }
+
+  function retakePhoto() {
+    cameraPhotoPreview.classList.add('hidden');
+    cameraVideo.classList.remove('hidden');
+    snapBtn.classList.remove('hidden');
+    retakeBtn.classList.add('hidden');
+    if (cropCameraBtn) cropCameraBtn.classList.add('hidden');
+    saveCameraBtn.classList.add('hidden');
+  }
+
+  function openCropFromCamera() {
+    const dataUrl = cameraCanvas.toDataURL('image/png');
+    openCropModalWithUrl(dataUrl);
+  }
+
+  async function saveCameraPhoto() {
+    const dataUrl = cameraCanvas.toDataURL('image/png');
+    saveCameraBtn.disabled = true;
+    saveCameraBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังบันทึก...';
+
+    try {
+      const response = await fetch('{{ url_for("update_avatar") }}', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify({ avatar_data: dataUrl })
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        stopCamera();
+        window.location.reload();
+      } else {
+        alert('เกิดข้อผิดพลาด: ' + (result.message || 'ไม่สามารถบันทึกรูปภาพได้'));
+        saveCameraBtn.disabled = false;
+        saveCameraBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> {{ t("avatar_camera_save") }}';
+      }
+    } catch (err) {
+      alert('เกิดข้อผิดพลาดในการเชื่อมต่อ: ' + err.message);
+      saveCameraBtn.disabled = false;
+      saveCameraBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> {{ t("avatar_camera_save") }}';
+    }
+  }
+
+  // -------------------------------------------------------------
+  // ระบบสลับแท็บเปลี่ยนรหัสผ่าน & ขอรับรหัส OTP ทางอีเมล
+  // -------------------------------------------------------------
+  function switchPwMethod(method) {
+    const panelCurrent = document.getElementById('panelCurrentPw');
+    const panelOtp = document.getElementById('panelOtpPw');
+
+    if (!panelCurrent || !panelOtp) return;
+
+    if (method === 'otp') {
+      panelCurrent.classList.add('hidden');
+      panelOtp.classList.remove('hidden');
+    } else {
+      panelOtp.classList.add('hidden');
+      panelCurrent.classList.remove('hidden');
+    }
+  }
+
+  let resetOtpCooldown = 0;
+  let resetOtpCooldownInterval = null;
+
+  async function requestResetOtp() {
+    if (resetOtpCooldown > 0) return;
+
+    const btn = document.getElementById('btnRequestResetOtp');
+    const btnText = document.getElementById('btnRequestResetOtpText');
+    const statusNotice = document.getElementById('otpStatusNotice');
+
+    btn.disabled = true;
+    btnText.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังส่งรหัส OTP ไปยังอีเมลของคุณ...';
+
+    try {
+      const response = await fetch('{{ url_for("profile_send_reset_otp") }}', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      });
+
+      const data = await response.json();
+      statusNotice.classList.remove('hidden');
+
+      if (data.success) {
+        statusNotice.className = 'p-3 rounded-xl text-xs bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-start gap-2';
+        statusNotice.innerHTML = `
+          <i class="fa-solid fa-circle-check text-emerald-600 mt-0.5"></i>
+          <div>
+            <p class="font-bold">${data.message}</p>
+            <p class="text-[11px] text-emerald-700 mt-0.5">กรุณาตรวจสอบในกล่องข้อความหรือกล่อง Junk/Spam แล้วนำรหัส 6 หลักมากรอกด้านล่าง</p>
+          </div>
+        `;
+
+        // Start 60-second cooldown
+        resetOtpCooldown = 60;
+        btnText.textContent = `ส่งรหัสอีกครั้ง (${resetOtpCooldown}s)`;
+        if (resetOtpCooldownInterval) clearInterval(resetOtpCooldownInterval);
+        resetOtpCooldownInterval = setInterval(() => {
+          resetOtpCooldown--;
+          if (resetOtpCooldown <= 0) {
+            clearInterval(resetOtpCooldownInterval);
+            btn.disabled = false;
+            btnText.innerHTML = '<i class="fa-solid fa-paper-plane text-[#FF6B4A]"></i> ขอรับรหัส OTP ใหม่อีกครั้ง';
+          } else {
+            btnText.textContent = `ส่งรหัสอีกครั้ง (${resetOtpCooldown}s)`;
+          }
+        }, 1000);
+
+        // Focus to OTP input
+        const otpInput = document.getElementById('reset_otp_code');
+        if (otpInput) otpInput.focus();
+      } else {
+        btn.disabled = false;
+        btnText.innerHTML = '<i class="fa-solid fa-paper-plane text-[#FF6B4A]"></i> {{ t("pw_otp_btn_send") }}';
+        statusNotice.className = 'p-3 rounded-xl text-xs bg-rose-50 border border-rose-200 text-rose-800 flex items-start gap-2';
+        statusNotice.innerHTML = `<i class="fa-solid fa-circle-exclamation text-rose-600 mt-0.5"></i><span>${data.message || 'เกิดข้อผิดพลาดในการส่งอีเมล'}</span>`;
+      }
+    } catch (err) {
+      btn.disabled = false;
+      btnText.innerHTML = '<i class="fa-solid fa-paper-plane text-[#FF6B4A]"></i> {{ t("pw_otp_btn_send") }}';
+      statusNotice.classList.remove('hidden');
+      statusNotice.className = 'p-3 rounded-xl text-xs bg-rose-50 border border-rose-200 text-rose-800 flex items-start gap-2';
+      statusNotice.innerHTML = `<i class="fa-solid fa-circle-exclamation text-rose-600 mt-0.5"></i><span>ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้: ${err.message}</span>`;
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('tab') === 'otp' || window.location.hash === '#otp') {
+      switchPwMethod('otp');
+    }
+  });
+</script>
+{% endblock %}

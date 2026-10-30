@@ -1,0 +1,973 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}Dashboard ควบคุมระบบ{% endblock %}
+{% block page_title %}Admin Control Dashboard{% endblock %}
+{% block page_subtitle %}ระบบจัดการ PrintVerse 3D Marketplace แบบศูนย์กลาง (Real-time){% endblock %}
+
+{% block head %}
+  <meta http-equiv="refresh" content="30">
+{% endblock %}
+
+{% block content %}
+<div class="space-y-8 pb-12">
+
+  <!-- Real-time Status Bar & Quick Jump Navigation -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#161412] p-4 rounded-2xl border border-white/5">
+    <div class="flex items-center gap-3">
+      <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+        ระบบ Real-time กำลังทำงาน
+      </span>
+      <span class="text-xs text-white/40 hidden md:inline">รีเฟรชข้อมูลอัตโนมัติทุก 30 วินาที</span>
+    </div>
+
+    <!-- Quick Section Links -->
+    <div class="flex items-center gap-2 flex-wrap">
+      <a href="#section-users" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-white/5 hover:bg-white/10 text-white/80 hover:text-white transition flex items-center gap-1.5">
+        <i class="fa-solid fa-users text-[#FF6B4A]"></i> A. รายชื่อผู้ใช้ ({{ users|length }})
+      </a>
+      <a href="#section-orders" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-white/5 hover:bg-white/10 text-white/80 hover:text-white transition flex items-center gap-1.5">
+        <i class="fa-solid fa-receipt text-emerald-400"></i> B. ซื้อขาย Real-time ({{ orders|length }})
+      </a>
+      <a href="#section-models" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-white/5 hover:bg-white/10 text-white/80 hover:text-white transition flex items-center gap-1.5">
+        <i class="fa-solid fa-cube text-purple-400"></i> C. จัดการโมเดล 3D ({{ models|length }})
+      </a>
+      <a href="#section-topups" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-white/5 hover:bg-white/10 text-white/80 hover:text-white transition flex items-center gap-1.5">
+        <i class="fa-solid fa-money-bill-transfer text-emerald-400"></i> D. เติมเงิน & สลิป ({{ topups|length }})
+      </a>
+      <a href="#section-withdrawals" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-white/5 hover:bg-white/10 text-white/80 hover:text-white transition flex items-center gap-1.5">
+        <i class="fa-solid fa-hand-holding-dollar text-amber-400"></i> E. คำขอถอนเงิน ({{ withdrawals|length }})
+      </a>
+      <a href="{{ url_for('admin_dashboard') }}" title="รีเฟรชทันที" class="p-1.5 px-2.5 rounded-lg text-xs font-medium bg-[#FF6B4A] hover:bg-[#E85938] text-white transition flex items-center gap-1">
+        <i class="fa-solid fa-rotate"></i>
+      </a>
+    </div>
+  </div>
+
+  <!-- Pending Approval Alert Banner (Displays when items are waiting for admin) -->
+  {% if total_pending_count > 0 %}
+  <div class="bg-gradient-to-r from-amber-500/15 via-[#FF6B4A]/15 to-emerald-500/10 border border-amber-500/30 rounded-2xl p-5 shadow-lg relative overflow-hidden">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div class="flex items-start sm:items-center gap-3.5">
+        <div class="w-11 h-11 rounded-2xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400 text-lg flex-shrink-0 animate-bounce">
+          <i class="fa-solid fa-bell"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h3 class="text-sm font-bold text-white">มี {{ total_pending_count }} รายการรอแอดมินตรวจสอบและอนุมัติ</h3>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-400 text-stone-900 animate-pulse">Action Required</span>
+          </div>
+          <div class="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-xs text-white/70">
+            {% if pending_models_count > 0 %}
+              <span class="flex items-center gap-1.5 text-purple-300 font-semibold">
+                <i class="fa-solid fa-cube text-purple-400"></i> โมเดล 3D รออนุมัติ: <strong>{{ pending_models_count }}</strong> รายการ
+              </span>
+            {% endif %}
+            {% if pending_topups_count > 0 %}
+              <span class="flex items-center gap-1.5 text-emerald-300 font-semibold">
+                <i class="fa-solid fa-receipt text-emerald-400"></i> สลิปเติมเงินรอตรวจสอบ: <strong>{{ pending_topups_count }}</strong> รายการ
+              </span>
+            {% endif %}
+            {% if pending_withdrawals_count > 0 %}
+              <span class="flex items-center gap-1.5 text-amber-300 font-semibold">
+                <i class="fa-solid fa-hand-holding-dollar text-amber-400"></i> คำขอถอนเงินรอตรวจ: <strong>{{ pending_withdrawals_count }}</strong> รายการ
+              </span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Action Buttons -->
+      <div class="flex items-center gap-2 flex-wrap">
+        {% if pending_models_count > 0 %}
+          <a href="#section-models" class="px-3.5 py-2 rounded-xl text-xs font-bold bg-purple-500/20 text-purple-300 hover:bg-purple-500/30 border border-purple-500/30 transition flex items-center gap-1.5 shadow-sm">
+            <i class="fa-solid fa-check-double text-[10px]"></i> โมเดล ({{ pending_models_count }})
+          </a>
+        {% endif %}
+        {% if pending_topups_count > 0 %}
+          <a href="#section-topups" class="px-3.5 py-2 rounded-xl text-xs font-bold bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 border border-emerald-500/30 transition flex items-center gap-1.5 shadow-sm">
+            <i class="fa-solid fa-receipt text-[10px]"></i> สลิป ({{ pending_topups_count }})
+          </a>
+        {% endif %}
+        {% if pending_withdrawals_count > 0 %}
+          <a href="#section-withdrawals" class="px-3.5 py-2 rounded-xl text-xs font-bold bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 border border-amber-500/30 transition flex items-center gap-1.5 shadow-sm">
+            <i class="fa-solid fa-hand-holding-dollar text-[10px]"></i> ถอนเงิน ({{ pending_withdrawals_count }})
+          </a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Key Performance Metrics (Cards - 5 Columns) -->
+  <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+    <!-- Users Card -->
+    <div class="bg-[#161412] rounded-2xl border border-white/5 p-5 relative overflow-hidden group hover:border-[#FF6B4A]/30 transition">
+      <div class="flex items-center justify-between mb-3">
+        <span class="text-[11px] text-white/40 uppercase tracking-wider font-semibold">ผู้ใช้งาน</span>
+        <div class="w-9 h-9 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center">
+          <i class="fa-solid fa-users text-blue-400 text-sm"></i>
+        </div>
+      </div>
+      <p class="text-3xl font-extrabold text-white tracking-tight">{{ total_users }}</p>
+      <div class="mt-2 flex items-center justify-between text-[11px] text-white/40">
+        <span>บัญชีใน .db</span>
+        <a href="#section-users" class="text-blue-400 hover:underline">รายชื่อ ↓</a>
+      </div>
+    </div>
+
+    <!-- Models Card -->
+    <div class="bg-[#161412] rounded-2xl border border-white/5 p-5 relative overflow-hidden group hover:border-[#FF6B4A]/30 transition">
+      <div class="flex items-center justify-between mb-3">
+        <span class="text-[11px] text-white/40 uppercase tracking-wider font-semibold">โมเดล 3D</span>
+        <div class="w-9 h-9 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center">
+          <i class="fa-solid fa-cube text-purple-400 text-sm"></i>
+        </div>
+      </div>
+      <p class="text-3xl font-extrabold text-white tracking-tight">{{ total_models }}</p>
+      <div class="mt-2 flex items-center justify-between text-[11px] text-white/40">
+        <span>ไฟล์พร้อมพิมพ์</span>
+        <a href="#section-models" class="text-purple-400 hover:underline">จัดการ ↓</a>
+      </div>
+    </div>
+
+    <!-- Orders Card -->
+    <div class="bg-[#161412] rounded-2xl border border-white/5 p-5 relative overflow-hidden group hover:border-[#FF6B4A]/30 transition">
+      <div class="flex items-center justify-between mb-3">
+        <span class="text-[11px] text-white/40 uppercase tracking-wider font-semibold">รายการซื้อขาย</span>
+        <div class="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
+          <i class="fa-solid fa-receipt text-amber-400 text-sm"></i>
+        </div>
+      </div>
+      <p class="text-3xl font-extrabold text-white tracking-tight">{{ total_orders }}</p>
+      <div class="mt-2 flex items-center justify-between text-[11px] text-white/40">
+        <span>ยอดสั่งซื้อ</span>
+        <a href="#section-orders" class="text-amber-400 hover:underline">ประวัติ ↓</a>
+      </div>
+    </div>
+
+    <!-- Withdrawals Card -->
+    <div class="bg-[#161412] rounded-2xl border border-white/5 p-5 relative overflow-hidden group hover:border-[#FF6B4A]/30 transition">
+      <div class="flex items-center justify-between mb-3">
+        <span class="text-[11px] text-white/40 uppercase tracking-wider font-semibold">คำขอถอนเงิน</span>
+        <div class="w-9 h-9 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center">
+          <i class="fa-solid fa-hand-holding-dollar text-rose-400 text-sm"></i>
+        </div>
+      </div>
+      <p class="text-3xl font-extrabold text-white tracking-tight">{{ total_withdrawals }}</p>
+      <div class="mt-2 flex items-center justify-between text-[11px] text-white/40">
+        <span>{% if pending_withdrawals_count > 0 %}<strong class="text-amber-400">{{ pending_withdrawals_count }} รอตรวจ</strong>{% else %}ทั้งหมด{% endif %}</span>
+        <a href="#section-withdrawals" class="text-rose-400 hover:underline">คำขอถอน ↓</a>
+      </div>
+    </div>
+
+    <!-- Revenue Card -->
+    <div class="bg-[#161412] rounded-2xl border border-white/5 p-5 relative overflow-hidden group hover:border-[#FF6B4A]/30 transition">
+      <div class="flex items-center justify-between mb-3">
+        <span class="text-[11px] text-white/40 uppercase tracking-wider font-semibold">รายรับรวม</span>
+        <div class="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
+          <i class="fa-solid fa-thai-baht-sign text-emerald-400 text-sm"></i>
+        </div>
+      </div>
+      <p class="text-3xl font-extrabold text-white tracking-tight">฿{{ "%.2f"|format(total_revenue) }}</p>
+      <div class="mt-2 flex items-center justify-between text-[11px] text-white/40">
+        <span>ยอดเงินหมุนเวียน</span>
+        <span class="text-emerald-400 font-medium">THB</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- [SECTION A]: ตารางรายชื่อผู้ใช้ทั้งหมดในฐานข้อมูล (.db)                   -->
+  <!-- ========================================================================= -->
+  <div id="section-users" class="bg-[#161412] rounded-2xl border border-white/5 overflow-hidden shadow-sm">
+    <div class="px-6 py-4 border-b border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white/[0.02]">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-400 text-sm font-bold">
+          A
+        </div>
+        <div>
+          <h2 class="text-base font-bold text-white flex items-center gap-2">
+            ตารางรายชื่อผู้ใช้ทั้งหมดในฐานข้อมูล (.db)
+          </h2>
+          <p class="text-xs text-white/40">รายชื่อบัญชีผู้ใช้งาน สิทธิ์การเข้าถึง และยอดคงเหลือในกระเป๋า</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-white/5 text-white/60 border border-white/10">
+          ทั้งหมด {{ users|length }} บัญชี
+        </span>
+      </div>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-white/5 bg-white/[0.01]">
+            <th class="text-left px-5 py-3.5 text-[11px] uppercase tracking-wider text-white/40 font-semibold">ID</th>
+            <th class="text-left px-5 py-3.5 text-[11px] uppercase tracking-wider text-white/40 font-semibold">ผู้ใช้งาน</th>
+            <th class="text-left px-5 py-3.5 text-[11px] uppercase tracking-wider text-white/40 font-semibold">อีเมล</th>
+            <th class="text-left px-5 py-3.5 text-[11px] uppercase tracking-wider text-white/40 font-semibold">เบอร์โทรศัพท์</th>
+            <th class="text-left px-5 py-3.5 text-[11px] uppercase tracking-wider text-white/40 font-semibold">Maker Badge</th>
+            <th class="text-left px-5 py-3.5 text-[11px] uppercase tracking-wider text-white/40 font-semibold">ยอดเงิน</th>
+            <th class="text-left px-5 py-3.5 text-[11px] uppercase tracking-wider text-white/40 font-semibold">สิทธิ์ระบบ</th>
+            <th class="text-left px-5 py-3.5 text-[11px] uppercase tracking-wider text-white/40 font-semibold">วันที่สมัคร</th>
+            <th class="text-right px-5 py-3.5 text-[11px] uppercase tracking-wider text-white/40 font-semibold">การจัดการ</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-white/5">
+          {% for u in users %}
+          <tr class="hover:bg-white/[0.02] transition {% if u.is_admin %}bg-[#FF6B4A]/[0.03]{% endif %}">
+            <td class="px-5 py-3.5 text-white/40 font-mono text-xs">#{{ u.id }}</td>
+            <td class="px-5 py-3.5">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shadow-sm
+                            {% if u.is_admin %}bg-[#FF6B4A] text-white{% else %}bg-white/10 text-white/80{% endif %}">
+                  {{ u.username[0]|upper }}
+                </div>
+                <div>
+                  <span class="text-white font-semibold text-xs block">{{ u.username }}</span>
+                  <span class="text-[10px] text-white/40">{{ u.printer_setup or 'ไม่มีข้อมูลเครื่องพิมพ์' }}</span>
+                </div>
+              </div>
+            </td>
+            <td class="px-5 py-3.5 text-white/70 text-xs font-mono">{{ u.email }}</td>
+            <td class="px-5 py-3.5 text-white/50 text-xs">{{ u.phone_number or '—' }}</td>
+            <td class="px-5 py-3.5">
+              <span class="px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-white/5 text-white/70 border border-white/10">
+                {{ u.maker_badge }}
+              </span>
+            </td>
+            <td class="px-5 py-3.5 font-semibold text-[#FF6B4A] text-xs font-mono">
+              ฿{{ "%.2f"|format(u.wallet_balance) }}
+            </td>
+            <td class="px-5 py-3.5">
+              {% if u.is_admin %}
+                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-bold bg-[#FF6B4A]/10 text-[#FF6B4A] border border-[#FF6B4A]/30">
+                  <i class="fa-solid fa-shield-halved text-[9px]"></i> Admin
+                </span>
+              {% else %}
+                <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium bg-white/5 text-white/50">
+                  Member
+                </span>
+              {% endif %}
+            </td>
+            <td class="px-5 py-3.5 text-white/40 text-xs font-mono">
+              {{ u.created_at.strftime('%d/%m/%Y %H:%M') if u.created_at else '—' }}
+            </td>
+            <td class="px-5 py-3.5 text-right">
+              <div class="inline-flex items-center gap-2">
+                <!-- Toggle Admin Role -->
+                {% if u.email != 'official@printverse.com' and u.id != current_user.id %}
+                <form action="{{ url_for('admin_toggle_admin', user_id=u.id) }}" method="POST">
+                  <button type="submit" 
+                          title="{% if u.is_admin %}ถอดสิทธิ์ Admin{% else %}แต่งตั้งเป็น Admin{% endif %}"
+                          class="px-2.5 py-1 rounded-lg text-xs font-medium transition border
+                                 {% if u.is_admin %}bg-yellow-500/10 text-yellow-400 border-yellow-500/30 hover:bg-yellow-500/20{% else %}bg-white/5 text-white/40 border-white/10 hover:text-yellow-400 hover:border-yellow-500/30{% endif %}">
+                    <i class="fa-solid fa-shield-halved"></i>
+                  </button>
+                </form>
+                {% endif %}
+
+                <!-- Delete User Account -->
+                {% if u.email != 'official@printverse.com' and u.id != current_user.id %}
+                <form action="{{ url_for('admin_delete_user', user_id=u.id) }}" method="POST"
+                      onsubmit="return confirm('ยืนยันการลบบัญชีผู้ใช้: {{ u.username }} ({{ u.email }}) ออกจากระบบฐานข้อมูล?')">
+                  <button type="submit" title="ลบบัญชีผู้ใช้"
+                          class="px-2.5 py-1 rounded-lg text-xs font-medium bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 transition">
+                    <i class="fa-solid fa-trash"></i>
+                  </button>
+                </form>
+                {% else %}
+                <span class="text-[10px] text-white/30 px-2 py-1 italic">บัญชีหลัก</span>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="9" class="px-6 py-12 text-center text-white/30 text-sm">ยังไม่มีข้อมูลผู้ใช้งานในระบบ</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- [SECTION B]: ตารางประวัติการซื้อขายแบบ Real-time                           -->
+  <!-- ========================================================================= -->
+  <div id="section-orders" class="bg-[#161412] rounded-2xl border border-white/5 overflow-hidden shadow-sm">
+    <div class="px-6 py-4 border-b border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white/[0.02]">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400 text-sm font-bold">
+          B
+        </div>
+        <div>
+          <h2 class="text-base font-bold text-white flex items-center gap-2">
+            ตารางประวัติการซื้อขายแบบ Real-time
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              Live
+            </span>
+          </h2>
+          <p class="text-xs text-white/40">ข้อมูลใครซื้อโมเดลอะไร ราคาเท่าไหร่ วันและเวลาไหน บันทึกลงฐานข้อมูลแบบทันที</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-white/5 text-white/60 border border-white/10">
+          คำสั่งซื้อทั้งหมด {{ orders|length }} รายการ
+        </span>
+      </div>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-white/5 bg-white/[0.01]">
+            <th class="text-left px-5 py-3.5 text-[11px] uppercase tracking-wider text-white/40 font-semibold">รหัสคำสั่งซื้อ</th>
+            <th class="text-left px-5 py-3.5 text-[11px] uppercase tracking-wider text-white/40 font-semibold">วันเวลาที่ซื้อ</th>
+            <th class="text-left px-5 py-3.5 text-[11px] uppercase tracking-wider text-white/40 font-semibold">ผู้ซื้อ (Buyer)</th>
+            <th class="text-left px-5 py-3.5 text-[11px] uppercase tracking-wider text-white/40 font-semibold">โมเดล 3D ที่ซื้อ</th>
+            <th class="text-left px-5 py-3.5 text-[11px] uppercase tracking-wider text-white/40 font-semibold">หมวดหมู่</th>
+            <th class="text-left px-5 py-3.5 text-[11px] uppercase tracking-wider text-white/40 font-semibold">ราคาที่ชำระ</th>
+            <th class="text-left px-5 py-3.5 text-[11px] uppercase tracking-wider text-white/40 font-semibold">สถานะ</th>
+            <th class="text-right px-5 py-3.5 text-[11px] uppercase tracking-wider text-white/40 font-semibold">จัดการ</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-white/5">
+          {% for order in orders %}
+          <tr class="hover:bg-white/[0.02] transition">
+            <td class="px-5 py-3.5 font-mono text-xs text-white/40">
+              #ORD-{{ "%04d"|format(order.id) }}
+            </td>
+            <td class="px-5 py-3.5 text-xs text-white/80 font-mono">
+              <div class="flex items-center gap-1.5">
+                <i class="fa-regular fa-clock text-[10px] text-white/40"></i>
+                <span>{{ order.purchased_at.strftime('%d/%m/%Y %H:%M:%S') if order.purchased_at else '—' }}</span>
+              </div>
+            </td>
+            <td class="px-5 py-3.5">
+              <div class="flex items-center gap-2.5">
+                <div class="w-7 h-7 rounded-full bg-[#FF6B4A]/20 flex items-center justify-center text-[10px] text-[#FF6B4A] font-bold">
+                  {{ order.user.username[0]|upper }}
+                </div>
+                <div>
+                  <span class="text-white text-xs font-semibold block">{{ order.user.username }}</span>
+                  <span class="text-[10px] text-white/40 font-mono">{{ order.user.email }}</span>
+                </div>
+              </div>
+            </td>
+            <td class="px-5 py-3.5">
+              <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-lg bg-white/5 border border-white/10 overflow-hidden flex items-center justify-center text-[#FF6B4A] flex-shrink-0">
+                  {% if order.model and order.model.thumbnail_url %}
+                    <img src="{{ order.model.thumbnail_url }}" alt="{{ order.model.title }}" class="w-full h-full object-cover">
+                  {% else %}
+                    <i class="fa-solid fa-cube text-xs"></i>
+                  {% endif %}
+                </div>
+                <div class="min-w-0 max-w-[220px]">
+                  <span class="text-white font-medium text-xs truncate block" title="{{ order.model.title if order.model else 'โมเดลถูกลบ' }}">
+                    {{ order.model.title if order.model else 'โมเดลถูกลบแล้ว' }}
+                  </span>
+                  {% if order.model %}
+                  <span class="px-1.5 py-0.2 rounded text-[9px] font-mono bg-white/5 text-white/50 border border-white/5">
+                    .{{ order.model.primary_format }}
+                  </span>
+                  {% endif %}
+                </div>
+              </div>
+            </td>
+            <td class="px-5 py-3.5 text-white/50 text-xs">
+              {{ order.model.category if order.model else '—' }}
+            </td>
+            <td class="px-5 py-3.5">
+              {% if order.price_paid == 0 %}
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-green-500/10 text-green-400 border border-green-500/20">
+                  ฟรี (Free)
+                </span>
+              {% else %}
+                <span class="font-mono font-bold text-xs text-[#FF6B4A]">
+                  ฿{{ "%.2f"|format(order.price_paid) }}
+                </span>
+              {% endif %}
+            </td>
+            <td class="px-5 py-3.5">
+              <span class="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-400">
+                <i class="fa-solid fa-circle-check text-[9px]"></i> ชำระสำเร็จ
+              </span>
+            </td>
+            <td class="px-5 py-3.5 text-right">
+              <form action="{{ url_for('admin_delete_order', order_id=order.id) }}" method="POST"
+                    onsubmit="return confirm('ลบประวัติการสั่งซื้อรหัส #ORD-{{ order.id }}?')">
+                <button type="submit" title="ลบประวัติการสั่งซื้อ"
+                        class="px-2.5 py-1 rounded-lg text-xs font-medium bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 transition">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              </form>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="8" class="px-6 py-12 text-center text-white/30 text-sm">
+              <i class="fa-solid fa-receipt text-2xl mb-2 text-white/10 block"></i>
+              ยังไม่มีประวัติการซื้อขายในระบบ
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- [SECTION C]: ตารางจัดการรายการโมเดล 3D (ลบโมเดลที่ไม่เหมาะสม)             -->
+  <!-- ========================================================================= -->
+  <div id="section-models" class="bg-[#161412] rounded-2xl border border-white/5 overflow-hidden shadow-sm">
+    <div class="px-6 py-4 border-b border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white/[0.02]">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-400 text-sm font-bold">
+          C
+        </div>
+        <div>
+          <h2 class="text-base font-bold text-white flex items-center gap-2">
+            ตารางจัดการรายการโมเดล 3D
+          </h2>
+          <p class="text-xs text-white/40">ตรวจสอบความเหมาะสมของเนื้อหาโมเดล 3 มิติ และกดลบโมเดลที่ไม่เหมาะสมออกได้ทันที</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <a href="{{ url_for('upload_model') }}" class="px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-[#FF6B4A] hover:bg-[#E85938] transition flex items-center gap-1.5 shadow-sm">
+          <i class="fa-solid fa-plus text-[10px]"></i>
+          <span>+ เพิ่มสินค้าใหม่</span>
+        </a>
+        <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-white/5 text-white/60 border border-white/10">
+          ทั้งหมด {{ models|length }} รายการ
+        </span>
+      </div>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-white/5 bg-white/[0.01]">
+            <th class="text-left px-5 py-3.5 text-[11px] uppercase tracking-wider text-white/40 font-semibold">ID</th>
+            <th class="text-left px-5 py-3.5 text-[11px] uppercase tracking-wider text-white/40 font-semibold">โมเดล 3D</th>
+            <th class="text-left px-5 py-3.5 text-[11px] uppercase tracking-wider text-white/40 font-semibold">หมวดหมู่</th>
+            <th class="text-left px-5 py-3.5 text-[11px] uppercase tracking-wider text-white/40 font-semibold">ผู้ออกแบบ</th>
+            <th class="text-left px-5 py-3.5 text-[11px] uppercase tracking-wider text-white/40 font-semibold">ไฟล์ & ขนาด</th>
+            <th class="text-left px-5 py-3.5 text-[11px] uppercase tracking-wider text-white/40 font-semibold">ราคา</th>
+            <th class="text-left px-5 py-3.5 text-[11px] uppercase tracking-wider text-white/40 font-semibold">สถานะ</th>
+            <th class="text-left px-5 py-3.5 text-[11px] uppercase tracking-wider text-white/40 font-semibold">วันที่สร้าง</th>
+            <th class="text-right px-5 py-3.5 text-[11px] uppercase tracking-wider text-white/40 font-semibold">การจัดการ (Moderation)</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-white/5">
+          {% for m in models %}
+          <tr class="hover:bg-white/[0.02] transition group">
+            <td class="px-5 py-3.5 font-mono text-xs text-white/40">#{{ m.id }}</td>
+            <td class="px-5 py-3.5">
+              <div class="flex items-center gap-3">
+                <a href="{{ url_for('model_detail', model_id=m.id) }}" target="_blank" title="ดูรายละเอียดสินค้า"
+                   class="w-10 h-10 rounded-xl bg-white/5 border border-white/10 overflow-hidden flex items-center justify-center text-[#FF6B4A] flex-shrink-0 hover:border-[#FF6B4A]/50 transition group">
+                  {% if m.thumbnail_url %}
+                    <img src="{{ m.thumbnail_url }}" alt="{{ m.title }}" class="w-full h-full object-contain p-0.5 group-hover:scale-105 transition-transform">
+                  {% else %}
+                    <i class="fa-solid fa-cube text-base"></i>
+                  {% endif %}
+                </a>
+                <div class="min-w-0 max-w-[260px]">
+                  <a href="{{ url_for('model_detail', model_id=m.id) }}" target="_blank"
+                     class="text-white hover:text-[#FF6B4A] font-semibold text-xs truncate block transition" title="{{ m.title }}">
+                    {{ m.title }}
+                  </a>
+                  <p class="text-[11px] text-white/40 truncate">{{ m.description or 'ไม่มีคำอธิบาย' }}</p>
+                </div>
+              </div>
+            </td>
+            <td class="px-5 py-3.5">
+              <span class="px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-white/5 text-white/70 border border-white/10">
+                {{ m.category }}
+              </span>
+            </td>
+            <td class="px-5 py-3.5 text-xs text-white/70">
+              {{ m.author.username if m.author else 'PrintVerse' }}
+            </td>
+            <td class="px-5 py-3.5 text-xs font-mono text-white/60">
+              <span class="text-white font-semibold">.{{ m.primary_format }}</span>
+              <span class="text-white/30">•</span>
+              <span>{{ m.file_size_mb }} MB</span>
+            </td>
+            <td class="px-5 py-3.5">
+              {% if m.is_free or m.price == 0 %}
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-green-500/10 text-green-400 border border-green-500/20">
+                  ฟรี
+                </span>
+              {% else %}
+                <span class="font-mono font-bold text-xs text-[#FF6B4A]">
+                  ฿{{ "%.2f"|format(m.price) }}
+                </span>
+              {% endif %}
+            </td>
+            <td class="px-5 py-3.5">
+              {% if m.is_approved or m.status == 'อนุมัติแล้ว' %}
+                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/25">
+                  <i class="fa-solid fa-circle-check text-[9px]"></i> อนุมัติแล้ว
+                </span>
+              {% elif m.status == 'ปฏิเสธ' %}
+                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/15 text-rose-400 border border-rose-500/25">
+                  <i class="fa-solid fa-circle-xmark text-[9px]"></i> ปฏิเสธ
+                </span>
+              {% else %}
+                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-400 border border-amber-500/25">
+                  <i class="fa-solid fa-clock text-[9px] animate-pulse"></i> รอตรวจสอบ
+                </span>
+              {% endif %}
+            </td>
+            <td class="px-5 py-3.5 text-xs text-white/40 font-mono">
+              {{ m.created_at.strftime('%d/%m/%Y') if m.created_at else '—' }}
+            </td>
+            <td class="px-5 py-3.5 text-right">
+              <div class="flex items-center justify-end gap-1.5">
+                <!-- Preview Button -->
+                <a href="{{ url_for('model_detail', model_id=m.id) }}" target="_blank" title="ดูหน้าสินค้า (เปิดหน้าต่างใหม่)"
+                   class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-white/10 text-white/80 hover:bg-white/20 transition flex items-center gap-1 shadow-xs">
+                  <i class="fa-solid fa-eye text-[10px]"></i>
+                  <span>ดู</span>
+                </a>
+
+                {% if not m.is_approved or m.status != 'อนุมัติแล้ว' %}
+                  <form action="{{ url_for('admin_approve_model', model_id=m.id) }}" method="POST" class="inline">
+                    <button type="submit" title="อนุมัติโมเดลขึ้นตลาดกลาง"
+                            class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500 hover:text-white transition flex items-center gap-1 shadow-xs">
+                      <i class="fa-solid fa-check text-[10px]"></i>
+                      <span>อนุมัติ</span>
+                    </button>
+                  </form>
+                {% else %}
+                  <form action="{{ url_for('admin_reject_model', model_id=m.id) }}" method="POST" class="inline"
+                        onsubmit="return confirm('ยืนยันนำโมเดล \'{{ m.title }}\' ออกจากตลาดกลาง?')">
+                    <button type="submit" title="พักจำหน่าย"
+                            class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-amber-500/20 text-amber-400 border border-amber-500/30 hover:bg-amber-500 hover:text-white transition flex items-center gap-1 shadow-xs">
+                      <i class="fa-solid fa-ban text-[10px]"></i>
+                      <span>พักขาย</span>
+                    </button>
+                  </form>
+                {% endif %}
+
+                <!-- Delete Inappropriate Model Button -->
+                <form action="{{ url_for('admin_delete_model', model_id=m.id) }}" method="POST" class="inline"
+                      onsubmit="return confirm('⚠️ ยืนยันการลบโมเดล 3D:\n\nชื่อ: {{ m.title }}\nID: #{{ m.id }}\n\nการลบนี้จะนำโมเดลออกจากระบบฐานข้อมูล (.db) ถาวร ยืนยันหรือไม่?')">
+                  <button type="submit" title="ลบออกจากฐานข้อมูล (.db)"
+                          class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-red-500/15 text-red-400 border border-red-500/30 hover:bg-red-500 hover:text-white transition flex items-center gap-1 shadow-xs">
+                    <i class="fa-solid fa-trash-can text-[10px]"></i>
+                    <span>ลบ (.db)</span>
+                  </button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="9" class="px-6 py-12 text-center text-white/30 text-sm">ยังไม่มีโมเดล 3D ในระบบ</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- [SECTION D]: ตารางรายการแจ้งเติมเงินและตรวจสอบสลิป                       -->
+  <!-- ========================================================================= -->
+  <div id="section-topups" class="bg-[#161412] rounded-2xl border border-white/5 overflow-hidden shadow-sm">
+    <div class="px-6 py-4 border-b border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white/[0.02]">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400 text-sm font-bold">
+          D
+        </div>
+        <div>
+          <h2 class="text-base font-bold text-white flex items-center gap-2">
+            ตารางรายการแจ้งเติมเงิน & หลักฐานสลิป (Top-up Slips)
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Live
+            </span>
+          </h2>
+          <p class="text-xs text-white/40">ตรวจสอบหลักฐานสลิปการโอนเงิน (Mobile Banking QR & TrueMoney Wallet) แบบ Real-time</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <a href="{{ url_for('admin_topups') }}" class="text-xs font-semibold text-[#FF6B4A] hover:underline">
+          ดูหน้ารวมทั้งหมด →
+        </a>
+        <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-white/5 text-white/60 border border-white/10">
+          ทั้งหมด {{ topups|length }} รายการ
+        </span>
+      </div>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-white/5 bg-white/[0.01]">
+            <th class="text-left px-5 py-3.5 text-[11px] uppercase tracking-wider text-white/40 font-semibold">ID</th>
+            <th class="text-left px-5 py-3.5 text-[11px] uppercase tracking-wider text-white/40 font-semibold">ผู้ใช้งาน</th>
+            <th class="text-left px-5 py-3.5 text-[11px] uppercase tracking-wider text-white/40 font-semibold">จำนวนเงิน</th>
+            <th class="text-left px-5 py-3.5 text-[11px] uppercase tracking-wider text-white/40 font-semibold">ช่องทาง</th>
+            <th class="text-left px-5 py-3.5 text-[11px] uppercase tracking-wider text-white/40 font-semibold">ธนาคาร / เบอร์ที่โอน</th>
+            <th class="text-left px-5 py-3.5 text-[11px] uppercase tracking-wider text-white/40 font-semibold">วันเวลาที่โอน</th>
+            <th class="text-left px-5 py-3.5 text-[11px] uppercase tracking-wider text-white/40 font-semibold">ภาพสลิป</th>
+            <th class="text-left px-5 py-3.5 text-[11px] uppercase tracking-wider text-white/40 font-semibold">สถานะ</th>
+            <th class="text-right px-5 py-3.5 text-[11px] uppercase tracking-wider text-white/40 font-semibold">จัดการ</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-white/5">
+          {% for t in topups %}
+          <tr class="hover:bg-white/[0.02] transition">
+            <td class="px-5 py-3.5 font-mono text-xs text-white/40">#TOP-{{ "%04d"|format(t.id) }}</td>
+            <td class="px-5 py-3.5">
+              <div class="flex items-center gap-2.5">
+                <div class="w-7 h-7 rounded-full bg-[#FF6B4A]/20 flex items-center justify-center text-[10px] text-[#FF6B4A] font-bold">
+                  {{ t.user.username[0]|upper }}
+                </div>
+                <div>
+                  <span class="text-white text-xs font-semibold block">{{ t.user.username }}</span>
+                  <span class="text-[10px] text-white/40 font-mono">{{ t.user.email }}</span>
+                </div>
+              </div>
+            </td>
+            <td class="px-5 py-3.5 font-mono font-bold text-sm text-emerald-400">
+              ฿{{ "%.2f"|format(t.amount) }}
+            </td>
+            <td class="px-5 py-3.5">
+              {% if 'TrueMoney' in t.payment_method %}
+                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-orange-500/10 text-orange-400 border border-orange-500/20">
+                  <i class="fa-solid fa-wallet"></i> TrueMoney
+                </span>
+              {% elif 'Banking' in t.payment_method %}
+                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-sky-500/10 text-sky-400 border border-sky-500/20">
+                  <i class="fa-solid fa-building-columns"></i> Banking
+                </span>
+              {% else %}
+                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                  <i class="fa-solid fa-qrcode"></i> พร้อมเพย์
+                </span>
+              {% endif %}
+            </td>
+            <td class="px-5 py-3.5 text-xs text-white/80">
+              {% if 'TrueMoney' in t.payment_method %}
+                <span class="font-mono flex items-center gap-1.5"><i class="fa-solid fa-phone text-xs text-orange-400"></i> {{ t.sender_phone }}</span>
+              {% elif 'Banking' in t.payment_method %}
+                <span class="flex items-center gap-1.5"><i class="fa-solid fa-building-columns text-xs text-sky-400"></i> {{ t.sender_phone }}</span>
+              {% else %}
+                <span class="flex items-center gap-1.5"><i class="fa-solid fa-bolt text-xs text-purple-400"></i> พร้อมเพย์</span>
+              {% endif %}
+            </td>
+            <td class="px-5 py-3.5 text-xs text-white/60">
+              {{ t.transfer_time }}
+            </td>
+            <td class="px-5 py-3.5">
+              <button type="button" onclick="showSlipModal('{{ url_for('static', filename='uploads/slips/' + t.slip_image) }}', '{{ t.user.username }}', '{{ t.amount }}')"
+                      class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-white/5 hover:bg-white/10 text-white border border-white/10 transition">
+                <i class="fa-solid fa-magnifying-glass-plus text-[#FF6B4A]"></i>
+                <span>ดูภาพสลิป</span>
+              </button>
+            </td>
+            <td class="px-5 py-3.5">
+              {% if t.status == 'สำเร็จ' %}
+                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/25">
+                  <i class="fa-solid fa-circle-check text-[9px]"></i> สำเร็จ (เงินเข้าแล้ว)
+                </span>
+              {% elif t.status == 'ปฏิเสธ' %}
+                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/15 text-rose-400 border border-rose-500/25">
+                  <i class="fa-solid fa-circle-xmark text-[9px]"></i> ปฏิเสธ / ไม่อนุมัติ
+                </span>
+              {% else %}
+                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-400 border border-amber-500/25">
+                  <i class="fa-solid fa-clock text-[9px] animate-pulse"></i> รอตรวจสอบ
+                </span>
+              {% endif %}
+            </td>
+            <td class="px-5 py-3.5 text-right">
+              <div class="flex items-center justify-end gap-1.5">
+                {% if t.status != 'สำเร็จ' %}
+                  <!-- Approve Top-up -->
+                  <form action="{{ url_for('admin_approve_topup', topup_id=t.id) }}" method="POST" class="inline"
+                        onsubmit="return confirm('ยืนยันอนุมัติยอดเงิน ฿{{ "%.2f"|format(t.amount) }} ให้กับคุณ {{ t.user.username }}?')">
+                    <button type="submit" title="อนุมัติยอดเงินเข้ากระเป๋า"
+                            class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500 hover:text-white transition flex items-center gap-1 shadow-xs">
+                      <i class="fa-solid fa-check text-[10px]"></i>
+                      <span>อนุมัติ</span>
+                    </button>
+                  </form>
+                {% endif %}
+
+                {% if t.status == 'รอการตรวจสอบ' %}
+                  <!-- Reject Top-up -->
+                  <form action="{{ url_for('admin_reject_topup', topup_id=t.id) }}" method="POST" class="inline"
+                        onsubmit="return confirm('ยืนยันปฏิเสธสลิปเติมเงินนี้?')">
+                    <button type="submit" title="ปฏิเสธสลิป"
+                            class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-amber-500/20 text-amber-400 border border-amber-500/30 hover:bg-amber-500 hover:text-white transition flex items-center gap-1 shadow-xs">
+                      <i class="fa-solid fa-ban text-[10px]"></i>
+                      <span>ปฏิเสธ</span>
+                    </button>
+                  </form>
+                {% endif %}
+
+                <!-- Delete Top-up Record -->
+                <form action="{{ url_for('admin_delete_topup', topup_id=t.id) }}" method="POST" class="inline"
+                      onsubmit="return confirm('ยืนยันการลบรายการประวัติเติมเงิน #TOP-{{ t.id }}?')">
+                  <button type="submit" title="ลบรายการ" class="px-2.5 py-1 rounded-lg text-xs font-medium bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 transition">
+                    <i class="fa-solid fa-trash"></i>
+                  </button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="9" class="px-6 py-12 text-center text-white/30 text-sm">
+              <i class="fa-solid fa-receipt text-3xl mb-2 text-white/10 block"></i>
+              ยังไม่มีรายการแจ้งเติมเงินในระบบ
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- [SECTION E]: รายการคำขอถอนเงินเข้าบัญชี (Withdrawal Requests)               -->
+  <!-- ========================================================================= -->
+  <div id="section-withdrawals" class="bg-[#161412] rounded-2xl border border-white/5 overflow-hidden shadow-sm">
+    <div class="px-6 py-4 border-b border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white/[0.02]">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg bg-rose-500/10 flex items-center justify-center text-rose-400 text-sm font-bold">
+          E
+        </div>
+        <div>
+          <h2 class="text-base font-bold text-white flex items-center gap-2">
+            <span>คำขอถอนเงินรายได้ (Withdrawal Requests)</span>
+            {% if pending_withdrawals_count > 0 %}
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30 animate-pulse">
+                {{ pending_withdrawals_count }} รออนุมัติ
+              </span>
+            {% endif %}
+          </h2>
+          <p class="text-xs text-white/40">ตรวจสอบคำขอถอนเงินและยืนยันการโอนเข้าบัญชีธนาคาร / พร้อมเพย์ของผู้ใช้</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <a href="{{ url_for('admin_withdrawals') }}" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-white/5 hover:bg-white/10 text-white border border-white/10 transition flex items-center gap-1.5">
+          <span>จัดการหน้าเต็ม</span>
+          <i class="fa-solid fa-arrow-right text-[10px]"></i>
+        </a>
+      </div>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-white/5 bg-white/[0.01]">
+            <th class="text-left px-5 py-3.5 text-[11px] uppercase tracking-wider text-white/40 font-semibold">ID</th>
+            <th class="text-left px-5 py-3.5 text-[11px] uppercase tracking-wider text-white/40 font-semibold">ผู้ใช้งาน</th>
+            <th class="text-left px-5 py-3.5 text-[11px] uppercase tracking-wider text-white/40 font-semibold">ยอดถอนเงิน</th>
+            <th class="text-left px-5 py-3.5 text-[11px] uppercase tracking-wider text-white/40 font-semibold">ธนาคาร / ช่องทาง</th>
+            <th class="text-left px-5 py-3.5 text-[11px] uppercase tracking-wider text-white/40 font-semibold">เลขที่บัญชี</th>
+            <th class="text-left px-5 py-3.5 text-[11px] uppercase tracking-wider text-white/40 font-semibold">ชื่อบัญชี</th>
+            <th class="text-left px-5 py-3.5 text-[11px] uppercase tracking-wider text-white/40 font-semibold">วันที่แจ้ง</th>
+            <th class="text-left px-5 py-3.5 text-[11px] uppercase tracking-wider text-white/40 font-semibold">สถานะ</th>
+            <th class="text-right px-5 py-3.5 text-[11px] uppercase tracking-wider text-white/40 font-semibold">จัดการ</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-white/5">
+          {% for w in withdrawals %}
+          <tr class="hover:bg-white/[0.02] transition">
+            <td class="px-5 py-3.5 font-mono text-xs text-white/40">#WD-{{ "%04d"|format(w.id) }}</td>
+            <td class="px-5 py-3.5">
+              <div class="flex items-center gap-2.5">
+                <div class="w-7 h-7 rounded-full bg-[#FF6B4A]/20 flex items-center justify-center text-[10px] text-[#FF6B4A] font-bold">
+                  {{ w.user.username[0]|upper }}
+                </div>
+                <div>
+                  <span class="text-white text-xs font-semibold block">{{ w.user.username }}</span>
+                  <span class="text-[10px] text-white/40 font-mono">{{ w.user.email }}</span>
+                </div>
+              </div>
+            </td>
+            <td class="px-5 py-3.5 font-mono font-bold text-sm text-[#FF6B4A]">
+              ฿{{ "%.2f"|format(w.amount) }}
+            </td>
+            <td class="px-5 py-3.5">
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-white/5 text-white/80 border border-white/10">
+                {% if 'พร้อมเพย์' in w.bank_name %}
+                  <i class="fa-solid fa-qrcode text-purple-400"></i>
+                {% else %}
+                  <i class="fa-solid fa-building-columns text-sky-400"></i>
+                {% endif %}
+                <span>{{ w.bank_name }}</span>
+              </span>
+            </td>
+            <td class="px-5 py-3.5 font-mono text-xs font-bold text-white tracking-wide">
+              {{ w.account_number }}
+            </td>
+            <td class="px-5 py-3.5 text-xs text-white/90 font-medium">
+              {{ w.account_name }}
+            </td>
+            <td class="px-5 py-3.5 text-xs text-white/60">
+              {{ w.created_at.strftime('%d/%m/%Y %H:%M') if w.created_at else '—' }}
+            </td>
+            <td class="px-5 py-3.5">
+              {% if w.status == 'โอนสำเร็จแล้ว' %}
+                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/25">
+                  <i class="fa-solid fa-circle-check text-[9px]"></i> โอนสำเร็จแล้ว
+                </span>
+              {% elif w.status == 'ปฏิเสธ' %}
+                <div class="space-y-0.5">
+                  <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/15 text-rose-400 border border-rose-500/25">
+                    <i class="fa-solid fa-circle-xmark text-[9px]"></i> ปฏิเสธ (คืนเงิน)
+                  </span>
+                  {% if w.admin_note %}
+                    <p class="text-[10px] text-white/40 max-w-[140px] truncate" title="{{ w.admin_note }}">{{ w.admin_note }}</p>
+                  {% endif %}
+                </div>
+              {% else %}
+                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-400 border border-amber-500/25">
+                  <i class="fa-solid fa-clock text-[9px] animate-pulse"></i> รอตรวจสอบ
+                </span>
+              {% endif %}
+            </td>
+            <td class="px-5 py-3.5 text-right">
+              <div class="flex items-center justify-end gap-1.5">
+                {% if w.status == 'รอการตรวจสอบ' %}
+                  <!-- Approve -->
+                  <form action="{{ url_for('admin_approve_withdrawal', tx_id=w.id) }}" method="POST" class="inline"
+                        onsubmit="return confirm('ยืนยันว่าได้โอนเงิน ฿{{ "%.2f"|format(w.amount) }} ให้คุณ {{ w.user.username }} แล้ว?')">
+                    <button type="submit" title="ยืนยันโอนสำเร็จ"
+                            class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500 hover:text-white transition flex items-center gap-1">
+                      <i class="fa-solid fa-check text-[10px]"></i>
+                      <span>สำเร็จ</span>
+                    </button>
+                  </form>
+
+                  <!-- Reject -->
+                  <button type="button" onclick="openDashboardRejectModal({{ w.id }}, '{{ w.user.username }}', {{ w.amount }})"
+                          title="ปฏิเสธคำขอและคืนเงินเข้ากระเป๋า"
+                          class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-amber-500/20 text-amber-400 border border-amber-500/30 hover:bg-amber-500 hover:text-white transition flex items-center gap-1">
+                    <i class="fa-solid fa-ban text-[10px]"></i>
+                    <span>ปฏิเสธ</span>
+                  </button>
+                {% endif %}
+
+                <!-- Delete -->
+                <form action="{{ url_for('admin_delete_withdrawal', tx_id=w.id) }}" method="POST" class="inline"
+                      onsubmit="return confirm('ยืนยันการลบรายการประวัติถอนเงิน #WD-{{ w.id }}?')">
+                  <button type="submit" title="ลบรายการ" class="px-2.5 py-1 rounded-lg text-xs font-medium bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 transition">
+                    <i class="fa-solid fa-trash"></i>
+                  </button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="9" class="px-6 py-12 text-center text-white/30 text-sm">
+              <i class="fa-solid fa-hand-holding-dollar text-3xl mb-2 text-white/10 block"></i>
+              ยังไม่มีรายการคำขอถอนเงินในระบบ
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- Reject Modal in Dashboard -->
+<div id="dash-reject-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 hidden"
+     onclick="closeDashboardRejectModal()">
+  <div class="bg-[#1A1816] border border-white/10 rounded-3xl max-w-md w-full p-6 space-y-4 relative shadow-2xl" onclick="event.stopPropagation()">
+    <div class="flex items-center justify-between border-b border-white/10 pb-3">
+      <h3 class="font-bold text-white text-sm flex items-center gap-2">
+        <i class="fa-solid fa-triangle-exclamation text-amber-400"></i>
+        <span>ปฏิเสธคำขอถอนเงิน</span>
+      </h3>
+      <button type="button" onclick="closeDashboardRejectModal()" class="text-white/40 hover:text-white text-base">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <form id="dash-reject-form" method="POST" action="" class="space-y-4">
+      <p class="text-xs text-white/70" id="dash-reject-desc">
+        ระบบจะคืนเงินกลับเข้ากระเป๋าของผู้ใช้ทันที
+      </p>
+
+      <div>
+        <label class="block text-xs font-semibold text-white/80 mb-1.5">
+          เหตุผลในการปฏิเสธ:
+        </label>
+        <textarea name="admin_note" rows="3" required
+                  placeholder="เช่น เลขที่บัญชีไม่ถูกต้อง หรือชื่อบัญชีไม่ตรงกับชื่อผู้ใช้"
+                  class="w-full px-3.5 py-2.5 bg-black/30 border border-white/10 rounded-xl text-white text-xs placeholder-white/30 focus:outline-hidden focus:border-amber-400"></textarea>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 pt-2 border-t border-white/10">
+        <button type="button" onclick="closeDashboardRejectModal()"
+                class="px-4 py-2 rounded-xl text-xs font-semibold bg-white/10 hover:bg-white/20 text-white transition">
+          ยกเลิก
+        </button>
+        <button type="submit"
+                class="px-4 py-2 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-600 text-stone-950 transition">
+          ยืนยันปฏิเสธ & คืนเงิน
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal for viewing full slip image -->
+<div id="slip-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 hidden"
+     onclick="closeSlipModal()">
+  <div class="bg-[#1A1816] border border-white/10 rounded-3xl max-w-lg w-full p-6 space-y-4 relative" onclick="event.stopPropagation()">
+    <div class="flex items-center justify-between border-b border-white/10 pb-3">
+      <h3 class="font-bold text-white text-sm" id="modal-title">ภาพสลิปการโอนเงิน</h3>
+      <button type="button" onclick="closeSlipModal()" class="text-white/40 hover:text-white text-base">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+    <div class="flex justify-center bg-black/40 rounded-2xl p-2 border border-white/5">
+      <img id="modal-img" src="#" alt="สลิปโอนเงิน" class="max-h-[500px] w-auto rounded-xl object-contain shadow-lg">
+    </div>
+    <div class="text-right">
+      <button type="button" onclick="closeSlipModal()" class="px-4 py-2 rounded-xl text-xs font-semibold bg-white/10 hover:bg-white/20 text-white transition">
+        ปิดหน้าต่าง
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  function openDashboardRejectModal(txId, username, amount) {
+    const form = document.getElementById('dash-reject-form');
+    form.action = `/admin/withdrawals/${txId}/reject`;
+    document.getElementById('dash-reject-desc').innerText = `ยืนยันปฏิเสธคำขอถอนเงินของคุณ ${username} จำนวน ฿${parseFloat(amount).toFixed(2)} บาท ระบบจะคืนยอดเงินเข้ากระเป๋าผู้ใช้ทันที`;
+    document.getElementById('dash-reject-modal').classList.remove('hidden');
+  }
+
+  function closeDashboardRejectModal() {
+    document.getElementById('dash-reject-modal').classList.add('hidden');
+  }
+
+  function showSlipModal(imgSrc, username, amount) {
+    document.getElementById('modal-img').src = imgSrc;
+    document.getElementById('modal-title').innerText = `สลิปโอนเงินของ ${username} (฿${parseFloat(amount).toFixed(2)})`;
+    document.getElementById('slip-modal').classList.remove('hidden');
+  }
+
+  function closeSlipModal() {
+    document.getElementById('slip-modal').classList.add('hidden');
+  }
+</script>
+{% endblock %}
